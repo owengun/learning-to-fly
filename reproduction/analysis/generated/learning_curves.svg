@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#222}.axis{stroke:#444;stroke-width:1}.grid{stroke:#ddd;stroke-width:1}.series{fill:none;stroke-width:2.5}</style>
+<text x="600" y="28" text-anchor="middle" font-size="20" font-weight="bold">Learning to Fly reproduction: mean across 3 seeds</text>
+<text x="315.0" y="43" text-anchor="middle" font-size="16" font-weight="bold">Evaluation return</text>
+<line class="grid" x1="75" y1="415.0" x2="555" y2="415.0"/>
+<text x="67" y="419.0" text-anchor="end" font-size="11">-1625</text>
+<line class="grid" x1="75" y1="343.0" x2="555" y2="343.0"/>
+<text x="67" y="347.0" text-anchor="end" font-size="11">-1235</text>
+<line class="grid" x1="75" y1="271.0" x2="555" y2="271.0"/>
+<text x="67" y="275.0" text-anchor="end" font-size="11">-845</text>
+<line class="grid" x1="75" y1="199.0" x2="555" y2="199.0"/>
+<text x="67" y="203.0" text-anchor="end" font-size="11">-455</text>
+<line class="grid" x1="75" y1="127.0" x2="555" y2="127.0"/>
+<text x="67" y="131.0" text-anchor="end" font-size="11">-65</text>
+<line class="grid" x1="75" y1="55.0" x2="555" y2="55.0"/>
+<text x="67" y="59.0" text-anchor="end" font-size="11">325</text>
+<text x="75.0" y="435" text-anchor="middle" font-size="11">0k</text>
+<text x="155.0" y="435" text-anchor="middle" font-size="11">50k</text>
+<text x="235.0" y="435" text-anchor="middle" font-size="11">100k</text>
+<text x="315.0" y="435" text-anchor="middle" font-size="11">150k</text>
+<text x="395.0" y="435" text-anchor="middle" font-size="11">200k</text>
+<text x="475.0" y="435" text-anchor="middle" font-size="11">250k</text>
+<text x="555.0" y="435" text-anchor="middle" font-size="11">300k</text>
+<line class="axis" x1="75" y1="55" x2="75" y2="415"/>
+<line class="axis" x1="75" y1="415" x2="555" y2="415"/>
+<polyline class="series" stroke="#1f77b4" points="75.0,145.2 91.0,145.8 107.0,145.4 123.0,145.4 139.0,155.1 155.0,152.3 171.0,151.1 187.0,148.6 203.0,147.6 219.0,147.5 235.0,150.6 251.0,151.6 267.0,149.4 283.0,150.8 299.0,163.7 315.0,163.3 331.0,172.2 347.0,185.8 363.0,175.2 379.0,192.1 395.0,216.8 411.0,207.7 427.0,269.0 443.0,154.5 459.0,224.0 475.0,272.4 491.0,242.8 507.0,187.3 523.0,166.6 539.0,150.4"/>
+<polyline class="series" stroke="#ff7f0e" points="75.0,145.2 91.0,145.8 107.0,145.4 123.0,145.4 139.0,155.1 155.0,152.3 171.0,151.1 187.0,148.6 203.0,147.6 219.0,147.5 235.0,150.6 251.0,152.1 267.0,148.3 283.0,150.2 299.0,156.7 315.0,171.4 331.0,185.2 347.0,171.5 363.0,190.8 379.0,198.0 395.0,265.6 411.0,189.4 427.0,191.8 443.0,156.4 459.0,227.5 475.0,234.1 491.0,199.6 507.0,301.1 523.0,264.8 539.0,184.5"/>
+<polyline class="series" stroke="#2ca02c" points="75.0,144.9 91.0,144.4 107.0,144.6 123.0,144.5 139.0,155.2 155.0,152.7 171.0,152.3 187.0,150.9 203.0,149.2 219.0,149.0 235.0,148.7 251.0,152.8 267.0,157.4 283.0,155.7 299.0,165.5 315.0,160.5 331.0,168.5 347.0,169.7 363.0,172.3 379.0,177.4 395.0,178.0 411.0,172.7 427.0,173.6 443.0,176.7 459.0,188.0 475.0,179.3 491.0,176.2 507.0,173.4 523.0,186.8 539.0,183.9"/>
+<polyline class="series" stroke="#d62728" points="75.0,145.2 91.0,145.8 107.0,145.4 123.0,145.4 139.0,150.7 155.0,150.8 171.0,150.7 187.0,148.2 203.0,147.7 219.0,147.6 235.0,146.6 251.0,145.5 267.0,145.6 283.0,147.4 299.0,146.8 315.0,149.4 331.0,146.0 347.0,150.3 363.0,149.0 379.0,157.8 395.0,154.6 411.0,162.6 427.0,164.3 443.0,174.5 459.0,195.4 475.0,171.8 491.0,176.8 507.0,205.9 523.0,148.9 539.0,167.6"/>
+<text x="315.0" y="457" text-anchor="middle" font-size="12">Environment interactions</text>
+<text x="900.0" y="43" text-anchor="middle" font-size="16" font-weight="bold">Episode length</text>
+<line class="grid" x1="660" y1="415.0" x2="1140" y2="415.0"/>
+<text x="652" y="419.0" text-anchor="end" font-size="11">0</text>
+<line class="grid" x1="660" y1="343.0" x2="1140" y2="343.0"/>
+<text x="652" y="347.0" text-anchor="end" font-size="11">100</text>
+<line class="grid" x1="660" y1="271.0" x2="1140" y2="271.0"/>
+<text x="652" y="275.0" text-anchor="end" font-size="11">200</text>
+<line class="grid" x1="660" y1="199.0" x2="1140" y2="199.0"/>
+<text x="652" y="203.0" text-anchor="end" font-size="11">300</text>
+<line class="grid" x1="660" y1="127.0" x2="1140" y2="127.0"/>
+<text x="652" y="131.0" text-anchor="end" font-size="11">400</text>
+<line class="grid" x1="660" y1="55.0" x2="1140" y2="55.0"/>
+<text x="652" y="59.0" text-anchor="end" font-size="11">500</text>
+<text x="660.0" y="435" text-anchor="middle" font-size="11">0k</text>
+<text x="740.0" y="435" text-anchor="middle" font-size="11">50k</text>
+<text x="820.0" y="435" text-anchor="middle" font-size="11">100k</text>
+<text x="900.0" y="435" text-anchor="middle" font-size="11">150k</text>
+<text x="980.0" y="435" text-anchor="middle" font-size="11">200k</text>
+<text x="1060.0" y="435" text-anchor="middle" font-size="11">250k</text>
+<text x="1140.0" y="435" text-anchor="middle" font-size="11">300k</text>
+<line class="axis" x1="660" y1="55" x2="660" y2="415"/>
+<line class="axis" x1="660" y1="415" x2="1140" y2="415"/>
+<polyline class="series" stroke="#1f77b4" points="660.0,385.6 676.0,385.5 692.0,385.5 708.0,385.5 724.0,385.7 740.0,384.9 756.0,382.4 772.0,381.2 788.0,380.4 804.0,379.9 820.0,372.6 836.0,370.7 852.0,368.6 868.0,366.7 884.0,348.8 900.0,356.7 916.0,349.7 932.0,330.6 948.0,344.4 964.0,316.9 980.0,303.8 996.0,237.1 1012.0,149.9 1028.0,177.6 1044.0,185.8 1060.0,91.0 1076.0,95.8 1092.0,113.2 1108.0,99.0 1124.0,94.6"/>
+<polyline class="series" stroke="#ff7f0e" points="660.0,385.6 676.0,385.5 692.0,385.5 708.0,385.5 724.0,385.7 740.0,384.9 756.0,382.4 772.0,381.2 788.0,380.4 804.0,379.9 820.0,372.6 836.0,371.0 852.0,368.8 868.0,370.6 884.0,354.8 900.0,333.7 916.0,331.9 932.0,339.1 948.0,278.5 964.0,280.9 980.0,245.2 996.0,192.7 1012.0,243.6 1028.0,178.1 1044.0,173.8 1060.0,156.8 1076.0,102.9 1092.0,99.7 1108.0,150.8 1124.0,96.0"/>
+<polyline class="series" stroke="#2ca02c" points="660.0,385.6 676.0,385.7 692.0,385.5 708.0,385.6 724.0,383.6 740.0,383.1 756.0,382.8 772.0,382.1 788.0,381.7 804.0,380.3 820.0,380.4 836.0,375.3 852.0,367.5 868.0,367.7 884.0,359.8 900.0,362.9 916.0,349.6 932.0,350.7 948.0,341.6 964.0,333.3 980.0,338.7 996.0,334.0 1012.0,325.4 1028.0,325.0 1044.0,309.8 1060.0,315.8 1076.0,310.6 1092.0,297.3 1108.0,283.5 1124.0,311.8"/>
+<polyline class="series" stroke="#d62728" points="660.0,385.6 676.0,385.5 692.0,385.5 708.0,385.5 724.0,385.2 740.0,382.4 756.0,381.2 772.0,382.4 788.0,381.8 804.0,381.3 820.0,381.0 836.0,381.4 852.0,379.8 868.0,378.2 884.0,378.4 900.0,376.2 916.0,377.9 932.0,375.5 948.0,375.5 964.0,363.3 980.0,368.3 996.0,362.2 1012.0,360.1 1028.0,350.3 1044.0,322.7 1060.0,346.1 1076.0,269.6 1092.0,211.3 1108.0,219.4 1124.0,188.8"/>
+<text x="900.0" y="457" text-anchor="middle" font-size="12">Environment interactions</text>
+<line x1="120" y1="478" x2="148" y2="478" stroke="#1f77b4" stroke-width="3"/>
+<text x="156" y="482" font-size="12">Baseline</text>
+<line x1="380" y1="478" x2="408" y2="478" stroke="#ff7f0e" stroke-width="3"/>
+<text x="416" y="482" font-size="12">Without curriculum</text>
+<line x1="640" y1="478" x2="668" y2="478" stroke="#2ca02c" stroke-width="3"/>
+<text x="676" y="482" font-size="12">Without action history</text>
+<line x1="900" y1="478" x2="928" y2="478" stroke="#d62728" stroke-width="3"/>
+<text x="936" y="482" font-size="12">Without asymmetric critic</text>
+</svg>

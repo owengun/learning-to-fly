@@ -1,0 +1,13 @@
+﻿configuration,config_code,seed,run_name,event_file
+Baseline,d+o+a+r+h+c+f+w+e+,0,2026_10_23_04_45_56_d+o+a+r+h+c+f+w+e+_000,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_45_56_d+o+a+r+h+c+f+w+e+_000\data.tfevents
+Baseline,d+o+a+r+h+c+f+w+e+,1,2026_10_23_04_46_42_d+o+a+r+h+c+f+w+e+_001,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_46_42_d+o+a+r+h+c+f+w+e+_001\data.tfevents
+Baseline,d+o+a+r+h+c+f+w+e+,2,2026_10_23_04_47_28_d+o+a+r+h+c+f+w+e+_002,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_47_28_d+o+a+r+h+c+f+w+e+_002\data.tfevents
+Without action history,d+o+a+r+h-c+f+w+e+,0,2026_10_23_04_50_35_d+o+a+r+h-c+f+w+e+_000,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_50_35_d+o+a+r+h-c+f+w+e+_000\data.tfevents
+Without action history,d+o+a+r+h-c+f+w+e+,1,2026_10_23_04_51_09_d+o+a+r+h-c+f+w+e+_001,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_51_09_d+o+a+r+h-c+f+w+e+_001\data.tfevents
+Without action history,d+o+a+r+h-c+f+w+e+,2,2026_10_23_04_51_42_d+o+a+r+h-c+f+w+e+_002,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_51_42_d+o+a+r+h-c+f+w+e+_002\data.tfevents
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,2026_10_23_04_52_18_d+o+a-r+h+c+f+w+e+_000,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_52_18_d+o+a-r+h+c+f+w+e+_000\data.tfevents
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,2026_10_23_04_53_10_d+o+a-r+h+c+f+w+e+_001,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_53_10_d+o+a-r+h+c+f+w+e+_001\data.tfevents
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,2026_10_23_04_54_05_d+o+a-r+h+c+f+w+e+_002,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_54_05_d+o+a-r+h+c+f+w+e+_002\data.tfevents
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,2026_10_23_04_48_14_d+o+a+r+h+c-f+w+e+_000,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_48_14_d+o+a+r+h+c-f+w+e+_000\data.tfevents
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,2026_10_23_04_49_01_d+o+a+r+h+c-f+w+e+_001,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_49_01_d+o+a+r+h+c-f+w+e+_001\data.tfevents
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,2026_10_23_04_49_49_d+o+a+r+h+c-f+w+e+_002,D:\learning-to-fly\reproduction\results\logs\2026_10_23_04_49_49_d+o+a+r+h+c-f+w+e+_002\data.tfevents

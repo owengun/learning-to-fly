@@ -1,0 +1,115 @@
+{
+  "episodes_per_checkpoint_condition": 1000,
+  "seeds": 3,
+  "conditions": 16,
+  "non_nominal_average": {
+    "baseline_return_mean": {
+      "mean": -362.1796232406889,
+      "sample_std": 240.9670509417807
+    },
+    "adaptive_return_mean": {
+      "mean": -521.6397952214445,
+      "sample_std": 497.5445612106271
+    },
+    "delta_return_mean": -159.4601719807556,
+    "baseline_episode_length_mean": {
+      "mean": 376.03746743777776,
+      "sample_std": 13.558000600071294
+    },
+    "adaptive_episode_length_mean": {
+      "mean": 408.27573445333337,
+      "sample_std": 9.803586773856914
+    },
+    "delta_episode_length_mean": 32.23826701555561,
+    "baseline_mean_position_error": {
+      "mean": 0.3048016332911111,
+      "sample_std": 0.05830504915201298
+    },
+    "adaptive_mean_position_error": {
+      "mean": 0.3252131591311111,
+      "sample_std": 0.08436403986699659
+    },
+    "delta_mean_position_error": 0.02041152584,
+    "baseline_success_rate": {
+      "mean": 0.6999777800555556,
+      "sample_std": 0.043032097225396845
+    },
+    "adaptive_success_rate": {
+      "mean": 0.7952888859666667,
+      "sample_std": 0.022446614760505194
+    },
+    "delta_success_rate": 0.09531110591111114,
+    "baseline_return_per_step": {
+      "mean": -0.9721564712597441,
+      "sample_std": 0.6318563283459804
+    },
+    "adaptive_return_per_step": {
+      "mean": -1.2931143919105252,
+      "sample_std": 1.2440879341704916
+    },
+    "delta_return_per_step": -0.3209579206507811
+  },
+  "conditions_with_higher_adaptive_length": 16,
+  "conditions_with_higher_adaptive_success": 16,
+  "conditions_with_lower_adaptive_position_error": 0,
+  "conditions_with_higher_adaptive_return": 0,
+  "conditions_with_higher_adaptive_return_per_step": 0,
+  "nominal": {
+    "force_factor": 1.0,
+    "mass_factor": 1.0,
+    "baseline_return_mean_mean": -293.48163095,
+    "baseline_return_mean_std": 382.76912655522517,
+    "adaptive_return_mean_mean": -422.06150055666666,
+    "adaptive_return_mean_std": 554.1788773609638,
+    "delta_return_mean": -128.57986960666665,
+    "baseline_episode_length_mean_mean": 434.098999,
+    "baseline_episode_length_mean_std": 7.999291912022095,
+    "adaptive_episode_length_mean_mean": 440.79399616666666,
+    "adaptive_episode_length_mean_std": 16.10095818938942,
+    "delta_episode_length_mean": 6.694997166666667,
+    "baseline_mean_position_error_mean": 0.2900295903333333,
+    "baseline_mean_position_error_std": 0.07648215282570894,
+    "adaptive_mean_position_error_mean": 0.30786079666666666,
+    "adaptive_mean_position_error_std": 0.08878433915661267,
+    "delta_mean_position_error": 0.01783120633333335,
+    "baseline_success_rate_mean": 0.8470000028666667,
+    "baseline_success_rate_std": 0.01907879768749728,
+    "adaptive_success_rate_mean": 0.8686666687333333,
+    "adaptive_success_rate_std": 0.03667880980621777,
+    "delta_success_rate": 0.021666665866666657,
+    "baseline_return_per_step_mean": -0.6660902682646428,
+    "baseline_return_per_step_std": 0.8719603646686639,
+    "adaptive_return_per_step_mean": -0.9724267475609383,
+    "adaptive_return_per_step_std": 1.2990083943331683,
+    "delta_return_per_step": -0.3063364792962955
+  },
+  "worst_condition_force3_mass1p2": {
+    "force_factor": 3.0,
+    "mass_factor": 1.2,
+    "baseline_return_mean_mean": -408.8978474666667,
+    "baseline_return_mean_std": 108.0710059965282,
+    "adaptive_return_mean_mean": -601.0652465000001,
+    "adaptive_return_mean_std": 418.08200661339595,
+    "delta_return_mean": -192.16739903333337,
+    "baseline_episode_length_mean_mean": 309.21966553333334,
+    "baseline_episode_length_mean_std": 16.58739855436494,
+    "adaptive_episode_length_mean_mean": 364.0956726,
+    "adaptive_episode_length_mean_std": 0.970284025668499,
+    "delta_episode_length_mean": 54.87600706666666,
+    "baseline_mean_position_error_mean": 0.3211743633,
+    "baseline_mean_position_error_std": 0.03622639717277152,
+    "adaptive_mean_position_error_mean": 0.34587857126666666,
+    "adaptive_mean_position_error_std": 0.07393836486724303,
+    "delta_mean_position_error": 0.02470420796666667,
+    "baseline_success_rate_mean": 0.5306666791333333,
+    "baseline_success_rate_std": 0.049095146077794825,
+    "adaptive_success_rate_mean": 0.6946666638,
+    "adaptive_success_rate_std": 0.0015275055702199984,
+    "delta_success_rate": 0.16399998466666665,
+    "baseline_return_per_step_mean": -1.3206683980476772,
+    "baseline_return_per_step_std": 0.3434826960456434,
+    "adaptive_return_per_step_mean": -1.6489830313319522,
+    "adaptive_return_per_step_std": 1.144340273131672,
+    "delta_return_per_step": -0.328314633284275
+  }
+}

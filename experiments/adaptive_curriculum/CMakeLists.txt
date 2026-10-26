@@ -1,0 +1,48 @@
+cmake_minimum_required(VERSION 3.16)
+project(learning_to_fly_adaptive_curriculum)
+
+set(CMAKE_CXX_STANDARD 17)
+
+find_package(HDF5)
+if(HDF5_FOUND)
+    set(RL_TOOLS_ENABLE_HDF5 ON)
+endif()
+
+find_package(Protobuf)
+if(Protobuf_FOUND)
+    set(RL_TOOLS_ENABLE_TENSORBOARD ON)
+endif()
+
+set(RL_TOOLS_ENABLE_JSON OFF)
+set(RL_TOOLS_ENABLE_BOOST_BEAST OFF)
+
+add_library(learning_to_fly_experiment INTERFACE)
+target_include_directories(
+    learning_to_fly_experiment
+    INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../src
+)
+
+add_subdirectory(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../external/rl_tools
+    ${CMAKE_CURRENT_BINARY_DIR}/rl_tools
+    EXCLUDE_FROM_ALL
+)
+
+add_executable(adaptive_curriculum_training adaptive_curriculum.cpp)
+target_link_libraries(
+    adaptive_curriculum_training
+    PRIVATE
+    rl_tools
+    learning_to_fly_experiment
+)
+
+add_executable(stress_evaluation stress_evaluation.cpp)
+target_link_libraries(
+    stress_evaluation
+    PRIVATE
+    rl_tools
+    learning_to_fly_experiment
+)
+

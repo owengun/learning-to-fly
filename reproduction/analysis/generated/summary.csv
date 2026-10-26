@@ -1,0 +1,5 @@
+﻿configuration,config_code,seeds,final_return_mean_across_seeds,final_return_std_across_seeds,final_episode_length_mean_across_seeds,final_episode_length_std_across_seeds,converged_seeds,convergence_step_mean,convergence_step_std,wall_time_mean_seconds,wall_time_std_seconds
+Baseline,d+o+a+r+h+c+f+w+e+,3,-191.4044392903646,373.4658904483588,444.9973449707031,15.399546331491603,0,nan,nan,46.061,0.8896724116212665
+Without action history,d+o+a+r+h-c+f+w+e+,3,-372.72996012369794,28.713933625409435,143.36133829752603,25.980730695008415,0,nan,nan,34.443333333333335,1.9159828635281004
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,3,-284.6970469156901,255.31757316313985,314.2026774088542,205.9834052273736,0,nan,nan,53.28933333333333,0.8966718091550158
+Without curriculum,d+o+a+r+h+c-f+w+e+,3,-376.13193766276044,569.6412290528267,443.0770263671875,24.39892864754033,0,nan,nan,47.199,0.6771905197210021

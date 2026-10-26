@@ -1,0 +1,75 @@
+{
+  "seeds": 3,
+  "budget_matched_step": 290000,
+  "extended_v3_step": 390000,
+  "baseline_290k": {
+    "return": {
+      "mean": -191.4044392903646,
+      "sample_std": 373.4658904483588
+    },
+    "episode_length": {
+      "mean": 444.9973449707031,
+      "sample_std": 15.399546331491603
+    }
+  },
+  "v1_290k": {
+    "return": {
+      "mean": -263.71867116292316,
+      "sample_std": 690.7694811373158
+    },
+    "episode_length": {
+      "mean": 442.53900146484375,
+      "sample_std": 29.71428603165051
+    }
+  },
+  "v2_290k": {
+    "return": {
+      "mean": -269.527826944987,
+      "sample_std": 753.7630896325616
+    },
+    "episode_length": {
+      "mean": 451.4599914550781,
+      "sample_std": 6.117668203838928
+    }
+  },
+  "v3_290k": {
+    "return": {
+      "mean": -430.4410800933838,
+      "sample_std": 568.5547070341916
+    },
+    "episode_length": {
+      "mean": 446.18666585286456,
+      "sample_std": 20.180599956847512
+    }
+  },
+  "v3_390k": {
+    "return": {
+      "mean": -519.0303141276041,
+      "sample_std": 237.61528146329346
+    },
+    "episode_length": {
+      "mean": 404.7120056152344,
+      "sample_std": 56.08618619713473
+    }
+  },
+  "v3_transitions": [
+    {
+      "seed": 0,
+      "first_stage1": 300000,
+      "first_stage2": null,
+      "final_stage": 1
+    },
+    {
+      "seed": 1,
+      "first_stage1": 250000,
+      "first_stage2": null,
+      "final_stage": 1
+    },
+    {
+      "seed": 2,
+      "first_stage1": null,
+      "first_stage2": null,
+      "final_stage": 0
+    }
+  ]
+}

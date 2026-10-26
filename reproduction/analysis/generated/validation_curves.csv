@@ -1,0 +1,83 @@
+﻿configuration,config_code,seed,step,validation_return_mean,validation_episode_length_mean,settling_fraction_200mm,max_position_error_after_200
+Baseline,d+o+a+r+h+c+f+w+e+,0,0,22.361434936523438,44.70000076293945,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,0,50000,39.05937194824219,38.70000076293945,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,0,100000,82.44170379638672,61.0,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,0,150000,91.49834442138672,70.0,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,0,200000,219.10313415527344,183.40000915527344,0.0,0.6064400672912598
+Baseline,d+o+a+r+h+c+f+w+e+,0,250000,682.9017944335938,500.0,0.0,0.45163893699645996
+Baseline,d+o+a+r+h+c+f+w+e+,0,300000,660.0651245117188,409.8999938964844,0.10000000149011612,0.31033089756965637
+Baseline,d+o+a+r+h+c+f+w+e+,1,0,13.133933067321777,35.5,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,1,50000,44.77125930786133,38.900001525878906,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,1,100000,78.57215118408203,56.20000076293945,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,1,150000,163.29446411132812,126.0,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,1,200000,273.8396301269531,217.60000610351562,0.0,0.6197656989097595
+Baseline,d+o+a+r+h+c+f+w+e+,1,250000,760.1527709960938,500.0,0.20000000298023224,0.5602046847343445
+Baseline,d+o+a+r+h+c+f+w+e+,1,300000,911.23974609375,500.0,1.0,0.2091129720211029
+Baseline,d+o+a+r+h+c+f+w+e+,2,0,22.05439567565918,37.10000228881836,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,2,50000,31.72299575805664,34.20000076293945,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,2,100000,70.69465637207031,52.5,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,2,150000,90.07982635498047,68.4000015258789,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,2,200000,149.1365203857422,126.5,0.0,nan
+Baseline,d+o+a+r+h+c+f+w+e+,2,250000,669.404296875,500.0,0.0,0.5593850016593933
+Baseline,d+o+a+r+h+c+f+w+e+,2,300000,634.2240600585938,412.8000183105469,0.0,0.5071941018104553
+Without action history,d+o+a+r+h-c+f+w+e+,0,0,28.92042350769043,45.29999923706055,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,0,50000,53.89408493041992,45.70000076293945,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,0,100000,54.25428009033203,44.29999923706055,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,0,150000,97.13388061523438,78.9000015258789,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,0,200000,156.69065856933594,119.5999984741211,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,0,250000,173.0019989013672,146.6999969482422,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,1,0,10.087278366088867,34.5,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,1,50000,40.05302047729492,44.0,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,1,100000,62.991451263427734,46.60000228881836,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,1,150000,70.14822387695312,60.10000228881836,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,1,200000,163.52310180664062,127.30000305175781,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,1,250000,172.20877075195312,128.3000030517578,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,2,0,26.46290397644043,37.900001525878906,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,2,50000,27.264307022094727,41.60000228881836,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,2,100000,52.245452880859375,45.400001525878906,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,2,150000,85.53258514404297,68.9000015258789,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,2,200000,147.619873046875,108.30000305175781,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,2,250000,149.8377685546875,123.5999984741211,0.0,nan
+Without action history,d+o+a+r+h-c+f+w+e+,2,300000,442.205078125,297.20001220703125,0.20000000298023224,0.44189929962158203
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,0,22.361434936523438,44.70000076293945,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,50000,60.49658966064453,47.900001525878906,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,100000,70.47652435302734,49.20000076293945,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,150000,69.87547302246094,53.79999923706055,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,200000,83.63921356201172,66.0999984741211,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,250000,148.97108459472656,126.5,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,300000,858.9459838867188,500.0,0.30000001192092896,0.33524489402770996
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,0,13.133933067321777,35.5,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,50000,50.318050384521484,45.70000076293945,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,100000,61.53847122192383,47.70000076293945,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,150000,79.76226043701172,57.79999923706055,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,200000,109.81560516357422,80.9000015258789,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,250000,83.61198425292969,64.5,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,300000,846.9185791015625,456.5,0.9000000357627869,0.1921849399805069
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,0,22.05439567565918,37.10000228881836,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,50000,39.90017318725586,42.20000076293945,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,100000,56.016876220703125,45.60000228881836,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,150000,68.83975219726562,54.0,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,200000,69.27079772949219,50.20000076293945,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,250000,74.85802459716797,59.400001525878906,0.0,nan
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,300000,677.3959350585938,462.5,0.0,0.42089852690696716
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,0,22.361434936523438,44.70000076293945,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,50000,39.05937194824219,38.70000076293945,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,100000,82.44170379638672,61.0,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,150000,139.4471893310547,97.0999984741211,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,200000,161.22723388671875,124.70000457763672,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,250000,685.2749633789062,412.0,0.0,0.3432810306549072
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,300000,935.0596923828125,500.0,1.0,0.19406525790691376
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,0,13.133933067321777,35.5,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,50000,44.77125930786133,38.900001525878906,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,100000,78.57215118408203,56.20000076293945,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,150000,275.4126892089844,188.10000610351562,0.10000000149011612,0.5273983478546143
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,200000,505.43536376953125,400.6000061035156,0.0,0.6540046334266663
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,250000,545.5912475585938,408.1000061035156,0.0,0.6084203720092773
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,300000,673.8641357421875,410.0,0.0,0.3733479976654053
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,0,22.05439567565918,37.10000228881836,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,50000,31.72299575805664,34.20000076293945,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,100000,70.69465637207031,52.5,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,150000,85.10165405273438,62.70000076293945,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,200000,214.6598663330078,167.6999969482422,0.0,0.6415066123008728
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,250000,174.39385986328125,162.90000915527344,0.0,nan
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,300000,802.3383178710938,500.0,0.0,0.37952733039855957

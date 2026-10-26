@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="500">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#222}</style>
+<text x="360" y="32" text-anchor="middle" font-size="19" font-weight="bold">Adaptive - baseline episode length (3-seed mean)</text>
+<text x="212.5" y="60" text-anchor="middle" font-size="13">mass x1</text>
+<text x="337.5" y="60" text-anchor="middle" font-size="13">mass x1.05</text>
+<text x="462.5" y="60" text-anchor="middle" font-size="13">mass x1.1</text>
+<text x="587.5" y="60" text-anchor="middle" font-size="13">mass x1.2</text>
+<text x="138" y="120.0" text-anchor="end" font-size="13">force x1</text>
+<rect x="150" y="75" width="121" height="76" rx="5" fill="rgb(220,241,220)" stroke="#aaa"/>
+<text x="210.5" y="119.0" text-anchor="middle" font-size="17" font-weight="bold">+6.7</text>
+<rect x="275" y="75" width="121" height="76" rx="5" fill="rgb(202,232,202)" stroke="#aaa"/>
+<text x="335.5" y="119.0" text-anchor="middle" font-size="17" font-weight="bold">+15.0</text>
+<rect x="400" y="75" width="121" height="76" rx="5" fill="rgb(192,228,192)" stroke="#aaa"/>
+<text x="460.5" y="119.0" text-anchor="middle" font-size="17" font-weight="bold">+19.4</text>
+<rect x="525" y="75" width="121" height="76" rx="5" fill="rgb(148,208,148)" stroke="#aaa"/>
+<text x="585.5" y="119.0" text-anchor="middle" font-size="17" font-weight="bold">+39.4</text>
+<text x="138" y="200.0" text-anchor="end" font-size="13">force x1.5</text>
+<rect x="150" y="155" width="121" height="76" rx="5" fill="rgb(203,233,203)" stroke="#aaa"/>
+<text x="210.5" y="199.0" text-anchor="middle" font-size="17" font-weight="bold">+14.3</text>
+<rect x="275" y="155" width="121" height="76" rx="5" fill="rgb(188,226,188)" stroke="#aaa"/>
+<text x="335.5" y="199.0" text-anchor="middle" font-size="17" font-weight="bold">+21.3</text>
+<rect x="400" y="155" width="121" height="76" rx="5" fill="rgb(171,218,171)" stroke="#aaa"/>
+<text x="460.5" y="199.0" text-anchor="middle" font-size="17" font-weight="bold">+29.1</text>
+<rect x="525" y="155" width="121" height="76" rx="5" fill="rgb(141,205,141)" stroke="#aaa"/>
+<text x="585.5" y="199.0" text-anchor="middle" font-size="17" font-weight="bold">+42.5</text>
+<text x="138" y="280.0" text-anchor="end" font-size="13">force x2</text>
+<rect x="150" y="235" width="121" height="76" rx="5" fill="rgb(188,226,188)" stroke="#aaa"/>
+<text x="210.5" y="279.0" text-anchor="middle" font-size="17" font-weight="bold">+21.3</text>
+<rect x="275" y="235" width="121" height="76" rx="5" fill="rgb(171,218,171)" stroke="#aaa"/>
+<text x="335.5" y="279.0" text-anchor="middle" font-size="17" font-weight="bold">+29.0</text>
+<rect x="400" y="235" width="121" height="76" rx="5" fill="rgb(154,211,154)" stroke="#aaa"/>
+<text x="460.5" y="279.0" text-anchor="middle" font-size="17" font-weight="bold">+36.8</text>
+<rect x="525" y="235" width="121" height="76" rx="5" fill="rgb(130,199,130)" stroke="#aaa"/>
+<text x="585.5" y="279.0" text-anchor="middle" font-size="17" font-weight="bold">+48.0</text>
+<text x="138" y="360.0" text-anchor="end" font-size="13">force x3</text>
+<rect x="150" y="315" width="121" height="76" rx="5" fill="rgb(162,214,162)" stroke="#aaa"/>
+<text x="210.5" y="359.0" text-anchor="middle" font-size="17" font-weight="bold">+33.0</text>
+<rect x="275" y="315" width="121" height="76" rx="5" fill="rgb(153,210,153)" stroke="#aaa"/>
+<text x="335.5" y="359.0" text-anchor="middle" font-size="17" font-weight="bold">+37.4</text>
+<rect x="400" y="315" width="121" height="76" rx="5" fill="rgb(142,205,142)" stroke="#aaa"/>
+<text x="460.5" y="359.0" text-anchor="middle" font-size="17" font-weight="bold">+42.1</text>
+<rect x="525" y="315" width="121" height="76" rx="5" fill="rgb(115,193,115)" stroke="#aaa"/>
+<text x="585.5" y="359.0" text-anchor="middle" font-size="17" font-weight="bold">+54.9</text>
+<text x="400" y="430" text-anchor="middle" font-size="12">Positive values mean longer adaptive-policy survival.</text>
+</svg>

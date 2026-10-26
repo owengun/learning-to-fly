@@ -1,0 +1,3 @@
+step,from_stage,to_stage,episode_length_mean,mean_position_error,return_per_step,stress_episode_length_mean,stress_mean_position_error,stress_return_per_step,reason
+300000,0,1,500,0.292985,1.67648,461,0.314825,1.62978,promotion
+400000,1,0,320.4,0.270687,1.71109,335.033,0.274344,1.67923,rollback

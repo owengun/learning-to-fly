@@ -1,0 +1,13 @@
+﻿configuration,config_code,seed,final_step,final_return_mean,final_episode_length_mean,convergence_step
+Baseline,d+o+a+r+h+c+f+w+e+,0,290000,-154.27915954589844,444.3550109863281,
+Baseline,d+o+a+r+h+c+f+w+e+,1,290000,162.11228942871094,429.92901611328125,
+Baseline,d+o+a+r+h+c+f+w+e+,2,290000,-582.0464477539062,460.7080078125,
+Without action history,d+o+a+r+h-c+f+w+e+,0,290000,-400.25830078125,166.5260009765625,
+Without action history,d+o+a+r+h-c+f+w+e+,1,290000,-374.9699401855469,148.2880096435547,
+Without action history,d+o+a+r+h-c+f+w+e+,2,290000,-342.9616394042969,115.27000427246094,
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,0,290000,-547.4824829101562,427.97100830078125,
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,1,290000,-37.56788635253906,438.21002197265625,
+Without asymmetric critic,d+o+a-r+h+c+f+w+e+,2,290000,-269.040771484375,76.427001953125,
+Without curriculum,d+o+a+r+h+c-f+w+e+,0,290000,-222.2772674560547,463.4480285644531,
+Without curriculum,d+o+a+r+h+c-f+w+e+,1,290000,100.77976989746094,416.0370178222656,
+Without curriculum,d+o+a+r+h+c-f+w+e+,2,290000,-1006.8983154296875,449.74603271484375,

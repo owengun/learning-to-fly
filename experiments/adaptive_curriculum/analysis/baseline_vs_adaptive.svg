@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="480">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#222}.grid{stroke:#ddd}.axis{stroke:#444}.line{fill:none;stroke-width:3}</style>
+<text x="297.5" y="30" text-anchor="middle" font-size="17" font-weight="bold">Evaluation return</text>
+<line class="grid" x1="65" y1="395.0" x2="530" y2="395.0"/><text x="57" y="399.0" text-anchor="end" font-size="11">-1300</text>
+<line class="grid" x1="65" y1="327.0" x2="530" y2="327.0"/><text x="57" y="331.0" text-anchor="end" font-size="11">-940</text>
+<line class="grid" x1="65" y1="259.0" x2="530" y2="259.0"/><text x="57" y="263.0" text-anchor="end" font-size="11">-580</text>
+<line class="grid" x1="65" y1="191.0" x2="530" y2="191.0"/><text x="57" y="195.0" text-anchor="end" font-size="11">-220</text>
+<line class="grid" x1="65" y1="123.0" x2="530" y2="123.0"/><text x="57" y="127.0" text-anchor="end" font-size="11">140</text>
+<line class="grid" x1="65" y1="55.0" x2="530" y2="55.0"/><text x="57" y="59.0" text-anchor="end" font-size="11">500</text>
+<text x="65.0" y="415" text-anchor="middle" font-size="11">0k</text>
+<text x="142.5" y="415" text-anchor="middle" font-size="11">48k</text>
+<text x="220.0" y="415" text-anchor="middle" font-size="11">97k</text>
+<text x="297.5" y="415" text-anchor="middle" font-size="11">145k</text>
+<text x="375.0" y="415" text-anchor="middle" font-size="11">193k</text>
+<text x="452.5" y="415" text-anchor="middle" font-size="11">242k</text>
+<text x="530.0" y="415" text-anchor="middle" font-size="11">290k</text>
+<line class="axis" x1="65" y1="55" x2="65" y2="395"/><line class="axis" x1="65" y1="395" x2="530" y2="395"/>
+<polyline class="line" stroke="#1f77b4" points="65.0,180.3 81.0,180.9 97.1,180.5 113.1,180.5 129.1,190.5 145.2,187.6 161.2,186.3 177.2,183.8 193.3,182.7 209.3,182.7 225.3,185.8 241.4,186.8 257.4,184.6 273.4,186.0 289.5,199.2 305.5,198.8 321.6,207.9 337.6,221.9 353.6,211.0 369.7,228.2 385.7,253.5 401.7,244.3 417.8,307.0 433.8,189.8 449.8,260.9 465.9,310.5 481.9,280.1 497.9,223.3 514.0,202.2 530.0,185.6"/>
+<polyline class="line" stroke="#d62728" points="65.0,180.3 81.0,180.6 97.1,180.5 113.1,180.4 129.1,190.1 145.2,187.4 161.2,184.9 177.2,182.9 193.3,181.8 209.3,185.4 225.3,184.9 241.4,184.9 257.4,188.3 273.4,186.7 289.5,192.0 305.5,199.2 321.6,198.4 337.6,244.6 353.6,220.9 369.7,240.8 385.7,191.8 401.7,311.3 417.8,231.2 433.8,283.2 449.8,336.5 465.9,272.5 481.9,310.3 497.9,313.6 514.0,166.2 530.0,199.3"/>
+<text x="847.5" y="30" text-anchor="middle" font-size="17" font-weight="bold">Episode length</text>
+<line class="grid" x1="615" y1="395.0" x2="1080" y2="395.0"/><text x="607" y="399.0" text-anchor="end" font-size="11">0</text>
+<line class="grid" x1="615" y1="327.0" x2="1080" y2="327.0"/><text x="607" y="331.0" text-anchor="end" font-size="11">100</text>
+<line class="grid" x1="615" y1="259.0" x2="1080" y2="259.0"/><text x="607" y="263.0" text-anchor="end" font-size="11">200</text>
+<line class="grid" x1="615" y1="191.0" x2="1080" y2="191.0"/><text x="607" y="195.0" text-anchor="end" font-size="11">300</text>
+<line class="grid" x1="615" y1="123.0" x2="1080" y2="123.0"/><text x="607" y="127.0" text-anchor="end" font-size="11">400</text>
+<line class="grid" x1="615" y1="55.0" x2="1080" y2="55.0"/><text x="607" y="59.0" text-anchor="end" font-size="11">500</text>
+<text x="615.0" y="415" text-anchor="middle" font-size="11">0k</text>
+<text x="692.5" y="415" text-anchor="middle" font-size="11">48k</text>
+<text x="770.0" y="415" text-anchor="middle" font-size="11">97k</text>
+<text x="847.5" y="415" text-anchor="middle" font-size="11">145k</text>
+<text x="925.0" y="415" text-anchor="middle" font-size="11">193k</text>
+<text x="1002.5" y="415" text-anchor="middle" font-size="11">242k</text>
+<text x="1080.0" y="415" text-anchor="middle" font-size="11">290k</text>
+<line class="axis" x1="615" y1="55" x2="615" y2="395"/><line class="axis" x1="615" y1="395" x2="1080" y2="395"/>
+<polyline class="line" stroke="#1f77b4" points="615.0,367.3 631.0,367.1 647.1,367.1 663.1,367.2 679.1,367.3 695.2,366.6 711.2,364.2 727.2,363.1 743.3,362.3 759.3,361.9 775.3,355.0 791.4,353.1 807.4,351.2 823.4,349.4 839.5,332.4 855.5,339.9 871.6,333.4 887.6,315.3 903.6,328.3 919.7,302.3 935.7,290.0 951.7,226.9 967.8,144.7 983.8,170.8 999.8,178.5 1015.9,89.0 1031.9,93.6 1047.9,110.0 1064.0,96.6 1080.0,92.4"/>
+<polyline class="line" stroke="#d62728" points="615.0,367.3 631.0,367.1 647.1,367.3 663.1,367.2 679.1,367.6 695.2,366.5 711.2,364.7 727.2,364.4 743.3,363.0 759.3,357.7 775.3,356.0 791.4,354.7 807.4,353.9 823.4,353.2 839.5,346.7 855.5,339.2 871.6,338.4 887.6,279.3 903.6,287.6 919.7,245.8 935.7,244.7 951.7,219.0 967.8,204.1 983.8,175.9 999.8,85.9 1015.9,134.5 1031.9,100.1 1047.9,115.7 1064.0,83.5 1080.0,94.1"/>
+<line x1="415" y1="447" x2="445" y2="447" stroke="#1f77b4" stroke-width="3"/><text x="452" y="451" font-size="13">Baseline</text>
+<line x1="565" y1="447" x2="595" y2="447" stroke="#d62728" stroke-width="3"/><text x="602" y="451" font-size="13">Adaptive wind/mass curriculum</text>
+</svg>
