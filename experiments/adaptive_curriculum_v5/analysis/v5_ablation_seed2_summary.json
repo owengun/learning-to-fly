@@ -1,0 +1,38 @@
+{
+  "scope": "single-seed diagnostic; not an inferential multi-seed ablation",
+  "seed": 2,
+  "post_promotion_training_steps": 50000,
+  "stage_1_mass_factor": 1.0,
+  "aggregate": {
+    "mass_only_400": {
+      "return_mean": -277.401495463125,
+      "episode_length_mean": 396.92774963125,
+      "mean_position_error": 0.3006363324875,
+      "success_rate": 0.76924999804375,
+      "return_per_step": -0.7254252953196545
+    },
+    "force_only_400": {
+      "return_mean": -345.37243843125003,
+      "episode_length_mean": 358.39456558125,
+      "mean_position_error": 0.3250043317625,
+      "success_rate": 0.6792500019125,
+      "return_per_step": -0.9814084755324135
+    },
+    "force_mass_fixed_reward_400": {
+      "return_mean": -345.37243843125003,
+      "episode_length_mean": 358.39456558125,
+      "mean_position_error": 0.3250043317625,
+      "success_rate": 0.6792500019125,
+      "return_per_step": -0.9814084755324135
+    },
+    "full_v5_400": {
+      "return_mean": 192.48094482325,
+      "episode_length_mean": 399.08150099375,
+      "mean_position_error": 0.19351946190625,
+      "success_rate": 0.77549999580625,
+      "return_per_step": 0.47111484907351286
+    }
+  },
+  "force_only_equals_force_mass_fixed_reward": true,
+  "interpretation": "Mass is unchanged in stage 1, so force-only and force+mass/fixed-reward are identical. Full v5 differs through its reward change; mass effects remain unidentifiable until stage 2 is reached."
+}

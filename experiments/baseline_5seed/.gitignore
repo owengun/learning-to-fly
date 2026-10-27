@@ -1,0 +1,4 @@
+build/
+run/checkpoints/
+run/logs/
+run/*.h5

@@ -1,0 +1,99 @@
+{
+  "checkpoint_order": "checkpoint is saved before validation/gate at the same step",
+  "selected_models_with_curriculum_exposure": 0,
+  "selected_models_total": 5,
+  "causal_interpretation": "Selected actors test precision-constrained validation selection and removal of the fixed curriculum, not force/mass/reward curriculum exposure.",
+  "runs": [
+    {
+      "seed": 0,
+      "run_name": "2026_10_26_06_18_51_d+o+a+r+h+c-f+w+e+_000_adaptive_v5",
+      "selected_step": 250000,
+      "first_transition_step": null,
+      "selected_was_curriculum_exposed": false,
+      "transitions": []
+    },
+    {
+      "seed": 1,
+      "run_name": "2026_10_26_06_18_50_d+o+a+r+h+c-f+w+e+_001_adaptive_v5",
+      "selected_step": 350000,
+      "first_transition_step": 400000,
+      "selected_was_curriculum_exposed": false,
+      "transitions": [
+        {
+          "step": "400000",
+          "from_stage": "0",
+          "to_stage": "1",
+          "episode_length_mean": "453.5",
+          "mean_position_error": "0.247131",
+          "return_per_step": "1.76928",
+          "stress_episode_length_mean": "397.433",
+          "stress_mean_position_error": "0.271739",
+          "stress_return_per_step": "1.67869",
+          "reason": "promotion"
+        }
+      ]
+    },
+    {
+      "seed": 2,
+      "run_name": "2026_10_26_06_18_43_d+o+a+r+h+c-f+w+e+_002_adaptive_v5",
+      "selected_step": 350000,
+      "first_transition_step": 350000,
+      "selected_was_curriculum_exposed": false,
+      "transitions": [
+        {
+          "step": "350000",
+          "from_stage": "0",
+          "to_stage": "1",
+          "episode_length_mean": "462.9",
+          "mean_position_error": "0.18815",
+          "return_per_step": "1.8235",
+          "stress_episode_length_mean": "440.5",
+          "stress_mean_position_error": "0.232331",
+          "stress_return_per_step": "1.74741",
+          "reason": "promotion"
+        }
+      ]
+    },
+    {
+      "seed": 3,
+      "run_name": "2026_10_26_06_18_51_d+o+a+r+h+c-f+w+e+_003_adaptive_v5",
+      "selected_step": 350000,
+      "first_transition_step": null,
+      "selected_was_curriculum_exposed": false,
+      "transitions": []
+    },
+    {
+      "seed": 4,
+      "run_name": "2026_10_26_06_18_50_d+o+a+r+h+c-f+w+e+_004_adaptive_v5",
+      "selected_step": 325000,
+      "first_transition_step": 350000,
+      "selected_was_curriculum_exposed": false,
+      "transitions": [
+        {
+          "step": "350000",
+          "from_stage": "0",
+          "to_stage": "1",
+          "episode_length_mean": "500",
+          "mean_position_error": "0.308415",
+          "return_per_step": "1.66555",
+          "stress_episode_length_mean": "395.967",
+          "stress_mean_position_error": "0.335171",
+          "stress_return_per_step": "1.58623",
+          "reason": "promotion"
+        },
+        {
+          "step": "375000",
+          "from_stage": "1",
+          "to_stage": "0",
+          "episode_length_mean": "452.7",
+          "mean_position_error": "0.396446",
+          "return_per_step": "1.52704",
+          "stress_episode_length_mean": "439.4",
+          "stress_mean_position_error": "0.432157",
+          "stress_return_per_step": "1.41682",
+          "reason": "rollback"
+        }
+      ]
+    }
+  ]
+}

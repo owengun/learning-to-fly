@@ -1,0 +1,82 @@
+{
+  "selection_uses_test_grid": false,
+  "hard_constraints": {
+    "nominal_position_error_max": 0.305,
+    "nominal_length_min": 250,
+    "stress_length_min": 325,
+    "stress_position_error_max": 0.45
+  },
+  "ranking": "maximum stress_length; robustness score and earlier step as tie-breakers",
+  "selected": [
+    {
+      "seed": 0,
+      "run_name": "2026_10_26_06_18_51_d+o+a+r+h+c-f+w+e+_000_adaptive_v5",
+      "step": 250000,
+      "nominal_length": 454.6000061035156,
+      "nominal_position_error": 0.29222142696380615,
+      "nominal_return_per_step": 1.6964671611785889,
+      "stress_length": 379.8333435058594,
+      "stress_position_error": 0.36292144656181335,
+      "stress_return_per_step": 1.534496545791626,
+      "precision_feasible": true,
+      "tie_break_score": 314.3190561532974,
+      "checkpoint": "experiments/adaptive_curriculum_v5/run/checkpoints/multirotor_td3/2026_10_26_06_18_51_d+o+a+r+h+c-f+w+e+_000_adaptive_v5/actor_000000000250000.h5"
+    },
+    {
+      "seed": 1,
+      "run_name": "2026_10_26_06_18_50_d+o+a+r+h+c-f+w+e+_001_adaptive_v5",
+      "step": 350000,
+      "nominal_length": 408.3999938964844,
+      "nominal_position_error": 0.24845261871814728,
+      "nominal_return_per_step": 1.784886360168457,
+      "stress_length": 409.26666259765625,
+      "stress_position_error": 0.29679179191589355,
+      "stress_return_per_step": 1.6646331548690796,
+      "precision_feasible": true,
+      "tie_break_score": 353.8755528330803,
+      "checkpoint": "experiments/adaptive_curriculum_v5/run/checkpoints/multirotor_td3/2026_10_26_06_18_50_d+o+a+r+h+c-f+w+e+_001_adaptive_v5/actor_000000000350000.h5"
+    },
+    {
+      "seed": 2,
+      "run_name": "2026_10_26_06_18_43_d+o+a+r+h+c-f+w+e+_002_adaptive_v5",
+      "step": 350000,
+      "nominal_length": 462.8999938964844,
+      "nominal_position_error": 0.18815015256404877,
+      "nominal_return_per_step": 1.8235013484954834,
+      "stress_length": 440.5,
+      "stress_position_error": 0.23233070969581604,
+      "stress_return_per_step": 1.7474111318588257,
+      "precision_feasible": true,
+      "tie_break_score": 398.4519137740135,
+      "checkpoint": "experiments/adaptive_curriculum_v5/run/checkpoints/multirotor_td3/2026_10_26_06_18_43_d+o+a+r+h+c-f+w+e+_002_adaptive_v5/actor_000000000350000.h5"
+    },
+    {
+      "seed": 3,
+      "run_name": "2026_10_26_06_18_51_d+o+a+r+h+c-f+w+e+_003_adaptive_v5",
+      "step": 350000,
+      "nominal_length": 453.79998779296875,
+      "nominal_position_error": 0.2721523642539978,
+      "nominal_return_per_step": 1.7183682918548584,
+      "stress_length": 438.5333251953125,
+      "stress_position_error": 0.30112457275390625,
+      "stress_return_per_step": 1.6336948871612549,
+      "precision_feasible": true,
+      "tie_break_score": 381.2056314945221,
+      "checkpoint": "experiments/adaptive_curriculum_v5/run/checkpoints/multirotor_td3/2026_10_26_06_18_51_d+o+a+r+h+c-f+w+e+_003_adaptive_v5/actor_000000000350000.h5"
+    },
+    {
+      "seed": 4,
+      "run_name": "2026_10_26_06_18_50_d+o+a+r+h+c-f+w+e+_004_adaptive_v5",
+      "step": 325000,
+      "nominal_length": 500.0,
+      "nominal_position_error": 0.2814787030220032,
+      "nominal_return_per_step": 1.7311985492706299,
+      "stress_length": 428.73333740234375,
+      "stress_position_error": 0.3430735766887665,
+      "stress_return_per_step": 1.5724787712097168,
+      "precision_feasible": true,
+      "tie_break_score": 366.2781094312668,
+      "checkpoint": "experiments/adaptive_curriculum_v5/run/checkpoints/multirotor_td3/2026_10_26_06_18_50_d+o+a+r+h+c-f+w+e+_004_adaptive_v5/actor_000000000325000.h5"
+    }
+  ]
+}
