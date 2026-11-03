@@ -24,6 +24,7 @@ struct RNNActor {
     std::array<std::array<float, HIDDEN_DIM>, OUTPUT_DIM> W_out{};
     std::array<float, OUTPUT_DIM> b_out{};
 
+    static constexpr bool recurrent = true;
     static constexpr const char* name = "vanilla";
 
     template <typename Actor, typename Visit>
@@ -321,6 +322,18 @@ struct RNNActor {
     }
 
 };
+
+template <typename Actor, typename Sequence>
+typename Actor::Output forward_sequence(Actor& actor, const Sequence& sequence) {
+    actor.reset();
+    if constexpr (Actor::recurrent) {
+        typename Actor::Output output{};
+        for (const auto& observation : sequence) output = actor.forward(observation);
+        return output;
+    } else {
+        return actor.forward(sequence.back());
+    }
+}
 
 } // namespace learning_to_fly::rnn
 

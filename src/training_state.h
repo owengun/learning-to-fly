@@ -1,6 +1,7 @@
 #include <queue>
 #include <vector>
 #include <mutex>
+#include "../experiments/rnn/matched_mlp_actor.h"
 #include "../experiments/rnn/gated_actor.h"
 namespace learning_to_fly{
     template <typename T_CONFIG>
@@ -21,7 +22,12 @@ namespace learning_to_fly{
 #else
         using RecurrentActor = rnn::RNNActor<>;
 #endif
-        RecurrentActor rnn_actor;
-        RecurrentActor rnn_actor_target;
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_MLP
+        using ExperimentActor = rnn::MatchedMLPActor;
+#else
+        using ExperimentActor = RecurrentActor;
+#endif
+        ExperimentActor rnn_actor;
+        ExperimentActor rnn_actor_target;
     };
 }

@@ -181,13 +181,7 @@ bool train_rnn_actor_td3(
 
         // Training sequences are independent.
         // Each begins with zero hidden state.
-        rnn.reset();
-
-        typename RNN::Output action{};
-
-        for (const auto& observation : sequences[row]) {
-            action = rnn.forward(observation);
-        }
+        const auto action = forward_sequence(rnn, sequences[row]);
 
         for (
             std::size_t j = 0;

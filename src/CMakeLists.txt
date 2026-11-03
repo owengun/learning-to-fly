@@ -52,6 +52,13 @@ endif()
 if(RL_TOOLS_BACKEND_ENABLE_CUDA)
     add_subdirectory(cuda)
 endif()
+add_executable(training_mlp_matched training.cpp)
+target_link_libraries(training_mlp_matched PRIVATE rl_tools learning_to_fly)
+target_compile_definitions(training_mlp_matched PRIVATE LEARNING_TO_FLY_ACTOR_MATCHED_MLP)
+
+add_executable(test_matched_mlp_actor ../experiments/rnn/test_matched_mlp_actor.cpp)
+target_compile_features(test_matched_mlp_actor PRIVATE cxx_std_17)
+
 add_executable(training_mlp training.cpp)
 target_link_libraries(training_mlp PRIVATE rl_tools learning_to_fly)
 target_compile_definitions(training_mlp PRIVATE LEARNING_TO_FLY_ACTOR_MLP)
