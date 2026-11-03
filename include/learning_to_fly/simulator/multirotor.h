@@ -1,6 +1,6 @@
 #ifndef LEARNING_TO_FLY_IN_SECONDS_SIMULATOR_MULTIROTOR_H
 #define LEARNING_TO_FLY_IN_SECONDS_SIMULATOR_MULTIROTOR_H
-
+#include <type_traits>
 #include <rl_tools/utils/generic/typing.h>
 
 namespace rl_tools::rl::environments::multirotor{
@@ -380,7 +380,7 @@ namespace rl_tools::rl::environments{
 //        ) : 0;
         static constexpr TI OBSERVATION_DIM = Observation::DIM;
         static constexpr TI OBSERVATION_DIM_PRIVILEGED = ObservationPrivileged::DIM;
-        static constexpr bool PRIVILEGED_OBSERVATION_AVAILABLE = !utils::typing::is_same_v<typename SPEC::STATIC_PARAMETERS::OBSERVATION_TYPE_PRIVILEGED, multirotor::observation::NONE<TI>>;
+        static constexpr bool PRIVILEGED_OBSERVATION_AVAILABLE = !std::is_same_v<typename SPEC::STATIC_PARAMETERS::OBSERVATION_TYPE_PRIVILEGED, multirotor::observation::NONE<TI>>;
         using STATIC_PARAMETERS = typename SPEC::STATIC_PARAMETERS;
         typename SPEC::PARAMETERS parameters;
         typename SPEC::PARAMETERS::Dynamics current_dynamics;

@@ -15,5 +15,6 @@ namespace learning_to_fly{
         typename CONFIG::ENVIRONMENT validation_envs[CONFIG::VALIDATION_N_EPISODES];
         typename CONFIG::ACTOR_TYPE::template DoubleBuffer<CONFIG::VALIDATION_N_EPISODES> validation_actor_buffers;
         rnn::RNNActor<18, 32, 4> rnn_actor;
+        rnn::RNNActor<18, 32, 4> rnn_actor_target;
     };
 }
