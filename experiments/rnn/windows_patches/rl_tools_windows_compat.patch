@@ -1,0 +1,12 @@
+diff --git a/include/rl_tools/rl/algorithms/td3/loop.h b/include/rl_tools/rl/algorithms/td3/loop.h
+index 50693aef8..3ada2587f 100644
+--- a/include/rl_tools/rl/algorithms/td3/loop.h
++++ b/include/rl_tools/rl/algorithms/td3/loop.h
+@@ -1,6 +1,6 @@
+ #include "../../../rl/components/off_policy_runner/operations_generic.h"
+ #include "../../../rl/algorithms/td3/operations_generic.h"
+-
++#include <cassert>
+ #include "../../../rl/utils/evaluation.h"
+ 
+ 
