@@ -10,6 +10,7 @@ struct GatedActor {
     using Input = typename Base::Input;
     using Hidden = typename Base::Hidden;
     using Output = typename Base::Output;
+    static constexpr bool recurrent = true;
     static constexpr const char* name = LSTM ? "lstm" : "gru";
     static constexpr std::size_t gate_count = LSTM ? 4 : 3;
 
