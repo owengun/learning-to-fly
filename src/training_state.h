@@ -14,13 +14,7 @@ namespace learning_to_fly{
         rlt::rl::utils::validation::Task<typename CONFIG::TASK_SPEC> task;
         typename CONFIG::ENVIRONMENT validation_envs[CONFIG::VALIDATION_N_EPISODES];
         typename CONFIG::ACTOR_TYPE::template DoubleBuffer<CONFIG::VALIDATION_N_EPISODES> validation_actor_buffers;
-#if defined(LEARNING_TO_FLY_ACTOR_LSTM)
-        using RecurrentActor = rnn::GatedActor<true>;
-#elif defined(LEARNING_TO_FLY_ACTOR_GRU)
         using RecurrentActor = rnn::GatedActor<false>;
-#else
-        using RecurrentActor = rnn::RNNActor<>;
-#endif
         RecurrentActor rnn_actor;
         RecurrentActor rnn_actor_target;
     };
