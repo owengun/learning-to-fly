@@ -43,9 +43,9 @@ bool check_actor() {
 }
 
 int main() {
-    if (!check_actor<true>() || !check_actor<false>()) {
+    if (!check_actor<true>()) {
         std::cerr << "Gated actor gradient or state reset failed\n";
         return 1;
     }
-    std::cout << "LSTM and GRU forward, reset and BPTT passed\n";
+    std::cout << "LSTM forward, reset and BPTT passed\n";
 }

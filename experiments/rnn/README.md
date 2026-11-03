@@ -1,4 +1,4 @@
-# Recurrent TD3 Actor experiment
+# LSTM TD3 Actor experiment
 
 The repository implements the paper *Learning to Fly in Seconds*. The MLP
 configuration in src/config uses TD3, a 146 -> 64 -> 64 -> 4 actor, and two
@@ -26,7 +26,7 @@ MLP baseline uses the original RLtools feed-forward TD3 loop.
 
 From the project root with an existing CMake build directory on Windows:
 
-    cmake --build build2026 --config Release --target training_mlp training_headless training_lstm training_gru test_gated_actor
+    cmake --build build2026 --config Release --target training_mlp training_headless test_gated_actor
     build2026/src/Release/test_gated_actor.exe
 
 Use a separate working directory for each run to isolate checkpoint and log
@@ -35,10 +35,8 @@ absolute path:
 
     training_mlp.exe --seed 0 --steps 30041
     training_headless.exe --seed 0 --steps 30041
-    training_lstm.exe --seed 0 --steps 30041
-    training_gru.exe --seed 0 --steps 30041
 
-training_headless selects Vanilla RNN. The smoke budget crosses the default
+training_headless selects LSTM. The smoke budget crosses the default
 15000-step critic warmup and 30000-step actor warmup. Omit --steps to use the
 full configured budget. The MLP and recurrent variants also differ in input
 features, hidden widths and actor optimizers. Comparisons among the recurrent
@@ -48,10 +46,10 @@ counts. Training episode returns include exploration noise.
 ## Evaluation and checkpoints
 
 A recurrent run saves policy weights every 10000 steps and on the final
-requested step, under checkpoints/vanilla, checkpoints/lstm or checkpoints/gru.
+requested step, under checkpoints/lstm.
 To load and evaluate a policy, use its matching executable, for example:
 
-    training_lstm.exe --seed 0 --evaluate checkpoints/lstm/actor_step_30040.txt --episodes 3
+    training_headless.exe --seed 0 --evaluate checkpoints/lstm/actor_step_30040.txt --episodes 3
 
 Evaluation uses the configured evaluation environment without action
 exploration noise and resets recurrent state for each episode. Vanilla also
@@ -59,7 +57,7 @@ accepts the previous 18/32/4 text checkpoint. The original MLP uses its
 existing validation and checkpoint path. The recurrent text checkpoints
 contain actor weights for evaluation and warm-starting. For example:
 
-    training_lstm.exe --seed 0 --warm-start path/to/actor_step_30040.txt --steps 30041
+    training_headless.exe --seed 0 --warm-start path/to/actor_step_30040.txt --steps 30041
 
 Warm-starting initializes both actors from the checkpoint and starts a new
 training run with fresh critics, replay, RNG and simulator state. Use a new
