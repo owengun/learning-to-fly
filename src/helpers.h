@@ -12,6 +12,12 @@ namespace learning_to_fly{
             n += std::string("f") + (ABLATION_SPEC::USE_INITIAL_REWARD_FUNCTION ? "+"  : "-");
             n += std::string("w") + (ABLATION_SPEC::RECALCULATE_REWARDS ? "+"  : "-");
             n += std::string("e") + (ABLATION_SPEC::EXPLORATION_NOISE_DECAY ? "+"  : "-");
+            if constexpr (ABLATION_SPEC::TRAJECTORY_TRACKING) {
+                n += std::string("_t") + std::to_string(ABLATION_SPEC::NUM_TRAJECTORY_POINTS);
+                if constexpr (ABLATION_SPEC::NUM_TRAJECTORY_POINTS > 0) {
+                    n += std::string("_i") + std::to_string(ABLATION_SPEC::TRAJECTORY_INTERVAL_MS);
+                }
+            }
             return n;
         }
         template <typename ABLATION_SPEC, typename CONFIG>

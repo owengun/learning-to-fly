@@ -39,8 +39,15 @@ namespace rl_tools::rl::environments::multirotor::parameters::reward_functions{
         constexpr TI ACTION_DIM = rl::environments::Multirotor<SPEC>::ACTION_DIM;
         typename rl::environments::multirotor::parameters::reward_functions::Squared<T>::Components components;
         components.orientation_cost = 1 - state.orientation[0] * state.orientation[0]; //math::abs(device.math, 2 * math::acos(device.math, quaternion_w));
-        components.position_cost = state.position[0] * state.position[0] + state.position[1] * state.position[1] + state.position[2] * state.position[2];
-        components.linear_vel_cost = state.linear_velocity[0] * state.linear_velocity[0] + state.linear_velocity[1] * state.linear_velocity[1] + state.linear_velocity[2] * state.linear_velocity[2];
+        T target_pos[3], target_vel[3];
+        rl::environments::multirotor::target_trajectory(device, state, (T)0, target_pos, target_vel);
+        T pos_diff[3], vel_diff[3];
+        for(TI i = 0; i < 3; i++){
+            pos_diff[i] = state.position[i] - target_pos[i];
+            vel_diff[i] = state.linear_velocity[i] - target_vel[i];
+        }
+        components.position_cost = pos_diff[0] * pos_diff[0] + pos_diff[1] * pos_diff[1] + pos_diff[2] * pos_diff[2];
+        components.linear_vel_cost = vel_diff[0] * vel_diff[0] + vel_diff[1] * vel_diff[1] + vel_diff[2] * vel_diff[2];
         components.angular_vel_cost = state.angular_velocity[0] * state.angular_velocity[0] + state.angular_velocity[1] * state.angular_velocity[1] + state.angular_velocity[2] * state.angular_velocity[2];
         T linear_acc[3];
         T angular_acc[3];

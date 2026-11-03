@@ -260,6 +260,30 @@ namespace rl_tools::rl::environments::multirotor{
             static constexpr TI CURRENT_DIM = 6;
             static constexpr TI DIM = NEXT_COMPONENT::DIM + CURRENT_DIM;
         };
+        template <typename T_T, typename T_TI, T_TI T_NUM_POINTS, T_TI T_INTERVAL_MS = 100, typename T_NEXT_COMPONENT = LastComponent<T_TI>>
+        struct TrajectoryPointsSpecification {
+            using T = T_T;
+            using TI = T_TI;
+            using NEXT_COMPONENT = T_NEXT_COMPONENT;
+            static constexpr TI NUM_POINTS = T_NUM_POINTS;
+            static constexpr TI INTERVAL_MS = T_INTERVAL_MS;
+            static constexpr bool PRIVILEGED = false;
+        };
+        template <typename T_T, typename T_TI, T_TI T_NUM_POINTS, T_TI T_INTERVAL_MS = 100, typename T_NEXT_COMPONENT = LastComponent<T_TI>>
+        struct TrajectoryPointsSpecificationPrivileged: TrajectoryPointsSpecification<T_T, T_TI, T_NUM_POINTS, T_INTERVAL_MS, T_NEXT_COMPONENT> {
+            static constexpr bool PRIVILEGED = true;
+        };
+        template <typename SPEC>
+        struct TrajectoryPoints {
+            using T = typename SPEC::T;
+            using TI = typename SPEC::TI;
+            using NEXT_COMPONENT = typename SPEC::NEXT_COMPONENT;
+            static constexpr TI NUM_POINTS = SPEC::NUM_POINTS;
+            static constexpr TI INTERVAL_MS = SPEC::INTERVAL_MS;
+            static constexpr bool PRIVILEGED = SPEC::PRIVILEGED;
+            static constexpr TI CURRENT_DIM = 3 * NUM_POINTS;
+            static constexpr TI DIM = NEXT_COMPONENT::DIM + CURRENT_DIM;
+        };
     }
 
 
@@ -268,11 +292,26 @@ namespace rl_tools::rl::environments::multirotor{
         using T = T_T;
         using TI = T_TI;
         static constexpr bool REQUIRES_INTEGRATION = true;
+        static constexpr bool HAS_TRAJECTORY = false;
         static constexpr TI DIM = 13;
         T position[3];
         T orientation[4];
         T linear_velocity[3];
         T angular_velocity[3];
+    };
+    template <typename T_T, typename T_TI, typename T_NEXT_COMPONENT>
+    struct StateTrajectory: T_NEXT_COMPONENT{
+        using T = T_T;
+        using TI = T_TI;
+        using NEXT_COMPONENT = T_NEXT_COMPONENT;
+        static constexpr bool REQUIRES_INTEGRATION = false;
+        static constexpr bool HAS_TRAJECTORY = true;
+        static constexpr TI DIM = 5 + NEXT_COMPONENT::DIM;
+        T trajectory_time;
+        T trajectory_scale;
+        T trajectory_interval;
+        T trajectory_direction;
+        T trajectory_z_scale;
     };
     template <typename T_T, typename T_TI, typename T_NEXT_COMPONENT>
     struct StateRotors: T_NEXT_COMPONENT{

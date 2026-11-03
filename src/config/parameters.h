@@ -22,6 +22,10 @@ namespace parameters{
         static constexpr bool ENABLE_CURRICULUM = true;
         static constexpr bool USE_INITIAL_REWARD_FUNCTION = true;
         static constexpr bool INIT_NORMAL = true;
+        static constexpr bool TRAJECTORY_TRACKING = true;
+        static constexpr int NUM_TRAJECTORY_POINTS = 0;
+        static constexpr int TRAJECTORY_INTERVAL_MS = 100;
+        static constexpr int STEP_LIMIT = 300001;
     };
     namespace builder {
         namespace rlt = RL_TOOLS_NAMESPACE_WRAPPER::rl_tools;
@@ -73,33 +77,40 @@ namespace parameters{
 
             struct ENVIRONMENT_STATIC_PARAMETERS{
                 static constexpr TI ACTION_HISTORY_LENGTH = 32;
+                using STATE_BASE = StateBase<T, TI>;
+                using STATE_TRAJECTORY = rlt::utils::typing::conditional_t<ABLATION_SPEC::TRAJECTORY_TRACKING, StateTrajectory<T, TI, STATE_BASE>, STATE_BASE>;
+                using STATE_DISTURBANCE = rlt::utils::typing::conditional_t<ABLATION_SPEC::DISTURBANCE, StateRandomForce<T, TI, STATE_TRAJECTORY>, STATE_TRAJECTORY>;
                 using STATE_TYPE = rlt::utils::typing::conditional_t<ABLATION_SPEC::ROTOR_DELAY,
                     rlt::utils::typing::conditional_t<ABLATION_SPEC::ACTION_HISTORY,
-                        StateRotorsHistory<T, TI, ACTION_HISTORY_LENGTH, rlt::utils::typing::conditional_t<ABLATION_SPEC::DISTURBANCE, StateRandomForce<T, TI, StateBase<T, TI>>, StateBase<T, TI>>>,
-                        StateRotors<T, TI, rlt::utils::typing::conditional_t<ABLATION_SPEC::DISTURBANCE, StateRandomForce<T, TI, StateBase<T, TI>>, StateBase<T, TI>>>>,
-                    rlt::utils::typing::conditional_t<ABLATION_SPEC::DISTURBANCE, StateRandomForce<T, TI, StateBase<T, TI>>, StateBase<T, TI>>>;
+                        StateRotorsHistory<T, TI, ACTION_HISTORY_LENGTH, STATE_DISTURBANCE>,
+                        StateRotors<T, TI, STATE_DISTURBANCE>>,
+                    STATE_DISTURBANCE>;
+                using OBSERVATION_TRAJECTORY = rlt::utils::typing::conditional_t<(ABLATION_SPEC::NUM_TRAJECTORY_POINTS > 0),
+                    observation::TrajectoryPoints<observation::TrajectoryPointsSpecification<T, TI, ABLATION_SPEC::NUM_TRAJECTORY_POINTS, ABLATION_SPEC::TRAJECTORY_INTERVAL_MS, observation::LastComponent<TI>>>,
+                    observation::LastComponent<TI>>;
+                using OBSERVATION_ACTION_HISTORY = rlt::utils::typing::conditional_t<ABLATION_SPEC::ACTION_HISTORY,
+                    observation::ActionHistory<observation::ActionHistorySpecification<T, TI, ACTION_HISTORY_LENGTH, OBSERVATION_TRAJECTORY>>,
+                    OBSERVATION_TRAJECTORY>;
                 using OBSERVATION_TYPE = observation::Position<observation::PositionSpecification<T, TI,
                         observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecification<T, TI,
                                 observation::LinearVelocity<observation::LinearVelocitySpecification<T, TI,
                                         observation::AngularVelocity<observation::AngularVelocitySpecification<T, TI,
-                                                rlt::utils::typing::conditional_t<ABLATION_SPEC::ACTION_HISTORY, observation::ActionHistory<observation::ActionHistorySpecification<T, TI, ACTION_HISTORY_LENGTH>>, observation::LastComponent<TI>>>>>>>>>>;
+                                                OBSERVATION_ACTION_HISTORY>>>>>>>>;
+                using OBSERVATION_PRIVILEGED_TRAJECTORY = rlt::utils::typing::conditional_t<(ABLATION_SPEC::NUM_TRAJECTORY_POINTS > 0),
+                    observation::TrajectoryPoints<observation::TrajectoryPointsSpecificationPrivileged<T, TI, ABLATION_SPEC::NUM_TRAJECTORY_POINTS, ABLATION_SPEC::TRAJECTORY_INTERVAL_MS, observation::LastComponent<TI>>>,
+                    observation::LastComponent<TI>>;
+                using OBSERVATION_PRIVILEGED_ROTOR_SPEEDS = rlt::utils::typing::conditional_t<ABLATION_SPEC::ROTOR_DELAY,
+                    observation::RotorSpeeds<observation::RotorSpeedsSpecification<T, TI, OBSERVATION_PRIVILEGED_TRAJECTORY>>,
+                    OBSERVATION_PRIVILEGED_TRAJECTORY>;
+                using OBSERVATION_PRIVILEGED_DISTURBANCE = rlt::utils::typing::conditional_t<ABLATION_SPEC::DISTURBANCE,
+                    observation::RandomForce<observation::RandomForceSpecification<T, TI, OBSERVATION_PRIVILEGED_ROTOR_SPEEDS>>,
+                    OBSERVATION_PRIVILEGED_ROTOR_SPEEDS>;
                 using OBSERVATION_TYPE_PRIVILEGED = rlt::utils::typing::conditional_t<ABLATION_SPEC::ASYMMETRIC_ACTOR_CRITIC,
                     observation::Position<observation::PositionSpecificationPrivileged<T, TI,
                         observation::OrientationRotationMatrix<observation::OrientationRotationMatrixSpecificationPrivileged<T, TI,
                             observation::LinearVelocity<observation::LinearVelocitySpecificationPrivileged<T, TI,
                                 observation::AngularVelocity<observation::AngularVelocitySpecificationPrivileged<T, TI,
-                                    rlt::utils::typing::conditional_t<ABLATION_SPEC::DISTURBANCE,
-                                        observation::RandomForce<observation::RandomForceSpecification<T, TI,
-                                            rlt::utils::typing::conditional_t<ABLATION_SPEC::ROTOR_DELAY,
-                                                observation::RotorSpeeds<observation::RotorSpeedsSpecification<T, TI>>,
-                                                observation::LastComponent<TI>
-                                            >
-                                        >>,
-                                        rlt::utils::typing::conditional_t<ABLATION_SPEC::ROTOR_DELAY,
-                                                observation::RotorSpeeds<observation::RotorSpeedsSpecification<T, TI>>,
-                                                observation::LastComponent<TI>
-                                        >
-                                    >
+                                    OBSERVATION_PRIVILEGED_DISTURBANCE
                                 >>
                             >>
                         >>

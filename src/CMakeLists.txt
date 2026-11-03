@@ -36,6 +36,13 @@ target_link_libraries(
         rl_tools
         learning_to_fly
 )
+add_executable(evaluate_models evaluate_models.cpp)
+target_link_libraries(
+        evaluate_models
+        PRIVATE
+        rl_tools
+        learning_to_fly
+)
 endif()
 
 if(LEARNING_TO_FLY_ENABLE_OLD_UI)

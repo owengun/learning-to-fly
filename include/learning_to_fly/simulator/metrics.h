@@ -74,10 +74,13 @@ namespace rl_tools{
             auto& eb = task.episode_buffer[episode_i];
             if(task.episode_length[episode_i] == SPEC::MAX_EPISODE_LENGTH){
                 auto& last_state = get(eb.next_states, task.episode_length[episode_i] - 1, 0);
+                T target_pos[3], target_vel[3];
+                rl::environments::multirotor::target_trajectory(device, last_state, (T)0, target_pos, target_vel);
                 T distance = 0;
-                distance += last_state.position[0] * last_state.position[0];
-                distance += last_state.position[1] * last_state.position[1];
-                distance += last_state.position[2] * last_state.position[2];
+                for(TI i = 0; i < 3; i++){
+                    T diff = last_state.position[i] - target_pos[i];
+                    distance += diff * diff;
+                }
                 distance = math::sqrt(device.math, distance);
                 if(distance < ((T)T_DISTANCE_MM / (T)1000.0)){
                     settled += 1;
@@ -91,20 +94,24 @@ namespace rl_tools{
         typename STATE::T get_quantity(DEVICE& device, rl::utils::validation::metrics::multirotor::MultirotorStateQuantity quantity, STATE& state, STATE& next_state, typename STATE::T dt){
             using T = typename STATE::T;
             T distance = 0;
+            T target_pos[3], target_vel[3];
+            rl::environments::multirotor::target_trajectory(device, state, (T)0, target_pos, target_vel);
             switch (quantity){
                 case rl::utils::validation::metrics::multirotor::POSITION:
-                    distance += state.position[0] * state.position[0];
-                    distance += state.position[1] * state.position[1];
-                    distance += state.position[2] * state.position[2];
+                    for(int i = 0; i < 3; i++){
+                        T diff = state.position[i] - target_pos[i];
+                        distance += diff * diff;
+                    }
                     distance = math::sqrt(device.math, distance);
                     break;
                 case rl::utils::validation::metrics::multirotor::ANGLE:
                     distance = math::abs(device.math, 2 * math::acos(device.math, state.orientation[0]));
                     break;
                 case rl::utils::validation::metrics::multirotor::LINEAR_VELOCITY:
-                    distance += state.linear_velocity[0] * state.linear_velocity[0];
-                    distance += state.linear_velocity[1] * state.linear_velocity[1];
-                    distance += state.linear_velocity[2] * state.linear_velocity[2];
+                    for(int i = 0; i < 3; i++){
+                        T diff = state.linear_velocity[i] - target_vel[i];
+                        distance += diff * diff;
+                    }
                     distance = math::sqrt(device.math, distance);
                     break;
                 case rl::utils::validation::metrics::multirotor::ANGULAR_VELOCITY:
