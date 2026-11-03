@@ -24,6 +24,20 @@ struct RNNActor {
     std::array<std::array<float, HIDDEN_DIM>, OUTPUT_DIM> W_out{};
     std::array<float, OUTPUT_DIM> b_out{};
 
+    static constexpr const char* name = "vanilla";
+
+    template <typename Actor, typename Visit>
+    static void visit_parameters(Actor& actor, Visit visit) {
+        for (auto& row : actor.W_x)
+            for (auto& value : row) visit(value);
+        for (auto& row : actor.W_h)
+            for (auto& value : row) visit(value);
+        for (auto& value : actor.b_h) visit(value);
+        for (auto& row : actor.W_out)
+            for (auto& value : row) visit(value);
+        for (auto& value : actor.b_out) visit(value);
+    }
+
     Hidden hidden{};
 
     void reset() {
@@ -188,11 +202,19 @@ struct RNNActor {
     
     // Train the RNN using an external gradient dLoss/dAction.
     // This allows a critic to supply the actor's policy gradient.
+    struct Gradients {
+        decltype(W_x) gWx{};
+        decltype(W_h) gWh{};
+        decltype(b_h) gbh{};
+        decltype(W_out) gWout{};
+        decltype(b_out) gbout{};
+    };
+
     template <std::size_t SEQ_LEN>
-    void train_sequence_with_gradient(
+    void accumulate_sequence_gradient(
         const std::array<Input, SEQ_LEN>& inputs,
         const Output& action_gradient,
-        float learning_rate = 0.001f
+        Gradients& gradients
     ) {
         static_assert(SEQ_LEN > 0, "Sequence must not be empty");
 
@@ -217,21 +239,14 @@ struct RNNActor {
                 (1.0f - output[i] * output[i]);
         }
 
-        // Parameter gradients.
-        decltype(W_x) gWx{};
-        decltype(W_h) gWh{};
-        decltype(b_h) gbh{};
-        decltype(W_out) gWout{};
-        decltype(b_out) gbout{};
-
         Hidden dh{};
 
         // Output layer backward.
         for (std::size_t i = 0; i < OUTPUT_DIM; ++i) {
-            gbout[i] += delta_out[i];
+            gradients.gbout[i] += delta_out[i];
 
             for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
-                gWout[i][j] +=
+                gradients.gWout[i][j] +=
                     delta_out[i] * states[SEQ_LEN][j];
 
                 dh[j] +=
@@ -250,15 +265,15 @@ struct RNNActor {
                 delta_h[i] =
                     dh[i] * (1.0f - h * h);
 
-                gbh[i] += delta_h[i];
+                gradients.gbh[i] += delta_h[i];
 
                 for (std::size_t j = 0; j < INPUT_DIM; ++j) {
-                    gWx[i][j] +=
+                    gradients.gWx[i][j] +=
                         delta_h[i] * inputs[t - 1][j];
                 }
 
                 for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
-                    gWh[i][j] +=
+                    gradients.gWh[i][j] +=
                         delta_h[i] * states[t - 1][j];
 
                     dh_previous[j] +=
@@ -269,27 +284,40 @@ struct RNNActor {
             dh = dh_previous;
         }
 
-        // SGD parameter update.
+    }
+
+    void apply_gradients(const Gradients& gradients, float learning_rate) {
         for (std::size_t i = 0; i < HIDDEN_DIM; ++i) {
-            b_h[i] -= learning_rate * gbh[i];
+            b_h[i] -= learning_rate * gradients.gbh[i];
 
             for (std::size_t j = 0; j < INPUT_DIM; ++j) {
-                W_x[i][j] -= learning_rate * gWx[i][j];
+                W_x[i][j] -= learning_rate * gradients.gWx[i][j];
             }
 
             for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
-                W_h[i][j] -= learning_rate * gWh[i][j];
+                W_h[i][j] -= learning_rate * gradients.gWh[i][j];
             }
         }
 
         for (std::size_t i = 0; i < OUTPUT_DIM; ++i) {
-            b_out[i] -= learning_rate * gbout[i];
+            b_out[i] -= learning_rate * gradients.gbout[i];
 
             for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
                 W_out[i][j] -=
-                    learning_rate * gWout[i][j];
+                    learning_rate * gradients.gWout[i][j];
             }
         }
+    }
+
+    template <std::size_t SEQ_LEN>
+    void train_sequence_with_gradient(
+        const std::array<Input, SEQ_LEN>& inputs,
+        const Output& action_gradient,
+        float learning_rate = 0.001f
+    ) {
+        Gradients gradients{};
+        accumulate_sequence_gradient(inputs, action_gradient, gradients);
+        apply_gradients(gradients, learning_rate);
     }
 
 };

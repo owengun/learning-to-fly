@@ -1,4 +1,6 @@
+#ifndef LEARNING_TO_FLY_ACTOR_MLP
 #define LEARNING_TO_FLY_EXPERIMENTAL_RNN
+#endif
 #include <iomanip>
 #include <string>
 #include <cstddef>
@@ -31,7 +33,9 @@ namespace rlt = RL_TOOLS_NAMESPACE_WRAPPER::rl_tools;
 
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
 #include "../experiments/rnn/rnn_td3_actor_update.h"
+#include "../experiments/rnn/rnn_td3_critic_update.h"
 #include "../experiments/rnn/rnn_environment_step.h"
+#include "../experiments/rnn/actor_checkpoint.h"
 #endif
 
 #include <filesystem>
@@ -39,58 +43,6 @@ namespace rlt = RL_TOOLS_NAMESPACE_WRAPPER::rl_tools;
 #include <iostream>
 
 namespace learning_to_fly {
-
-#ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
-
-template <typename RNN>
-bool save_rnn_weights(
-    const RNN& actor,
-    const std::string& filename
-) {
-    std::filesystem::path path(filename);
-
-    std::filesystem::create_directories(
-        path.parent_path()
-    );
-
-    std::ofstream file(filename);
-
-    if (!file.is_open()) {
-        std::cerr << "[RNN] Cannot save: "
-                  << filename << std::endl;
-        return false;
-    }
-
-    file << std::setprecision(9);
-
-    // Save network dimensions and parameters.
-    file << actor.W_x.size() << " "
-         << actor.W_x[0].size() << " "
-         << actor.W_out.size() << "\n";
-
-    for (const auto& row : actor.W_x)
-        for (float value : row)
-            file << value << "\n";
-
-    for (const auto& row : actor.W_h)
-        for (float value : row)
-            file << value << "\n";
-
-    for (float value : actor.b_h)
-        file << value << "\n";
-
-    for (const auto& row : actor.W_out)
-        for (float value : row)
-            file << value << "\n";
-
-    for (float value : actor.b_out)
-        file << value << "\n";
-
-    file.flush();
-    return file.good();
-}
-
-#endif
 
     // ============================================
     // Initialize training
@@ -218,7 +170,7 @@ bool save_rnn_weights(
     // ============================================
 
     template <typename CONFIG>
-    void step(TrainingState<CONFIG>& ts) {
+    void step(TrainingState<CONFIG>& ts, bool save_final_checkpoint = false) {
 
         using TI = typename CONFIG::TI;
 
@@ -290,7 +242,7 @@ bool save_rnn_weights(
                     if (recent_count < EPISODE_WINDOW) ++recent_count;
 
                     const std::filesystem::path csv_path =
-                        "checkpoints/rnn/training_episodes.csv";
+                        std::string("checkpoints/") + decltype(ts.rnn_actor)::name + "/training_episodes.csv";
                     std::error_code dir_error;
                     std::filesystem::create_directories(
                         csv_path.parent_path(), dir_error);
@@ -352,36 +304,42 @@ bool save_rnn_weights(
                     CRITIC_TRAINING_INTERVAL == 0
         ) {
 
+            constexpr std::size_t sequence_length = 8;
+            constexpr auto capacity = CONFIG::OFF_POLICY_RUNNER_SPEC::REPLAY_BUFFER_CAPACITY;
+            using RNN = decltype(ts.rnn_actor_target);
+            using Sequence = std::array<typename RNN::Input, sequence_length>;
+            constexpr auto batch_size = CONFIG::TD3_PARAMETERS::CRITIC_BATCH_SIZE;
+            std::array<Sequence, batch_size> current_sequences;
+            std::array<Sequence, batch_size> next_sequences;
+
             for (TI critic_i = 0; critic_i < 2; ++critic_i) {
+                if (!rnn::gather_aligned_sequence_batch<sequence_length, capacity>(
+                        ts.device, ts.off_policy_runner.replay_buffers[0],
+                        ts.critic_batch, current_sequences, next_sequences, ts.rng)) {
+                    continue;
+                }
+
+                auto& target = ts.rnn_actor_target;
+                auto& buffers = ts.critic_training_buffers;
+                for (TI row = 0; row < batch_size; ++row) {
+                    target.reset();
+                    typename RNN::Output action{};
+                    for (const auto& observation : next_sequences[row]) {
+                        action = target.forward(observation);
+                    }
+                    for (TI j = 0; j < CONFIG::ENVIRONMENT::ACTION_DIM; ++j) {
+                        rlt::set(buffers.next_actions, row, j, action[j]);
+                    }
+                }
 
                 rlt::target_action_noise(
-                    ts.device,
-                    ts.actor_critic,
-                    ts.critic_training_buffers
-                        .target_next_action_noise,
-                    ts.rng
+                    ts.device, ts.actor_critic, buffers.target_next_action_noise, ts.rng
                 );
-
-                rlt::gather_batch(
-                    ts.device,
-                    ts.off_policy_runner,
-                    ts.critic_batch,
-                    ts.rng
-                );
-
-                rlt::train_critic(
-                    ts.device,
-                    ts.actor_critic,
-
-                    critic_i == 0
-                        ? ts.actor_critic.critic_1
-                        : ts.actor_critic.critic_2,
-
-                    ts.critic_batch,
-                    ts.critic_optimizers[critic_i],
-                    ts.actor_buffers[critic_i],
-                    ts.critic_buffers[critic_i],
-                    ts.critic_training_buffers
+                rnn::train_critic_with_rnn_targets(
+                    ts.device, ts.actor_critic,
+                    critic_i == 0 ? ts.actor_critic.critic_1 : ts.actor_critic.critic_2,
+                    ts.critic_batch, ts.critic_optimizers[critic_i],
+                    ts.critic_buffers[critic_i], buffers
                 );
             }
         }
@@ -459,51 +417,8 @@ bool save_rnn_weights(
                 CONFIG::TD3_PARAMETERS::
                     ACTOR_TARGET_UPDATE_INTERVAL == 0
         ) {
-            constexpr float tau = 0.005f;
-
-            auto& source = ts.rnn_actor;
-            auto& target = ts.rnn_actor_target;
-
-            // Input-to-hidden weights
-            for (std::size_t i = 0; i < source.W_x.size(); ++i) {
-                for (std::size_t j = 0; j < source.W_x[i].size(); ++j) {
-                    target.W_x[i][j] =
-                        (1.0f - tau) * target.W_x[i][j] +
-                        tau * source.W_x[i][j];
-                }
-            }
-
-            // Hidden-to-hidden weights
-            for (std::size_t i = 0; i < source.W_h.size(); ++i) {
-                for (std::size_t j = 0; j < source.W_h[i].size(); ++j) {
-                    target.W_h[i][j] =
-                        (1.0f - tau) * target.W_h[i][j] +
-                        tau * source.W_h[i][j];
-                }
-            }
-
-            // Hidden bias
-            for (std::size_t i = 0; i < source.b_h.size(); ++i) {
-                target.b_h[i] =
-                    (1.0f - tau) * target.b_h[i] +
-                    tau * source.b_h[i];
-            }
-
-            // Hidden-to-output weights
-            for (std::size_t i = 0; i < source.W_out.size(); ++i) {
-                for (std::size_t j = 0; j < source.W_out[i].size(); ++j) {
-                    target.W_out[i][j] =
-                        (1.0f - tau) * target.W_out[i][j] +
-                        tau * source.W_out[i][j];
-                }
-            }
-
-            // Output bias
-            for (std::size_t i = 0; i < source.b_out.size(); ++i) {
-                target.b_out[i] =
-                    (1.0f - tau) * target.b_out[i] +
-                    tau * source.b_out[i];
-            }
+            rnn::update_target(ts.rnn_actor_target, ts.rnn_actor,
+                               CONFIG::TD3_PARAMETERS::ACTOR_POLYAK);
         }
 
 
@@ -512,14 +427,14 @@ bool save_rnn_weights(
         // ----------------------------------------
 
         if (ts.step % 10000 == 0 ||
-            ts.step + 1 >= CONFIG::STEP_LIMIT) {
+            save_final_checkpoint || ts.step + 1 >= CONFIG::STEP_LIMIT) {
 
             std::string filename =
-                "checkpoints/rnn/rnn_actor_step_" +
+                std::string("checkpoints/") + decltype(ts.rnn_actor)::name + "/actor_step_" +
                 std::to_string(ts.step) +
                 ".txt";
 
-            bool saved = save_rnn_weights(
+            bool saved = rnn::save_actor(
                 ts.rnn_actor,
                 filename
             );

@@ -21,8 +21,6 @@ namespace learning_to_fly::rnn {
 //
 // IMPORTANT:
 // The RNN's environment hidden state is preserved.
-// The existing Critic target still uses the original MLP
-// target Actor, so this is not yet complete RNN-TD3.
 
 template <std::size_t SEQ_LEN = 8, typename TS, typename RNN>
 bool train_rnn_actor_td3(
@@ -250,6 +248,7 @@ bool train_rnn_actor_td3(
     // 8. Backpropagate Critic gradients into RNN
     // --------------------------------------------
 
+    typename RNN::Gradients gradients{};
     for (
         std::size_t row = 0;
         row < BATCH_SIZE;
@@ -274,12 +273,14 @@ bool train_rnn_actor_td3(
                 );
         }
 
-        rnn.train_sequence_with_gradient(
+        rnn.accumulate_sequence_gradient(
             sequences[row],
             action_gradient,
-            learning_rate
+            gradients
         );
     }
+
+    rnn.apply_gradients(gradients, learning_rate);
 
     // --------------------------------------------
     // 9. Restore environment hidden state

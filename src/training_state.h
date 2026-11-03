@@ -1,7 +1,7 @@
 #include <queue>
 #include <vector>
 #include <mutex>
-#include "../experiments/rnn/rnn_actor.h"
+#include "../experiments/rnn/gated_actor.h"
 namespace learning_to_fly{
     template <typename T_CONFIG>
     struct TrainingState: rlt::rl::algorithms::td3::loop::TrainingState<T_CONFIG>{
@@ -14,7 +14,14 @@ namespace learning_to_fly{
         rlt::rl::utils::validation::Task<typename CONFIG::TASK_SPEC> task;
         typename CONFIG::ENVIRONMENT validation_envs[CONFIG::VALIDATION_N_EPISODES];
         typename CONFIG::ACTOR_TYPE::template DoubleBuffer<CONFIG::VALIDATION_N_EPISODES> validation_actor_buffers;
-        rnn::RNNActor<18, 32, 4> rnn_actor;
-        rnn::RNNActor<18, 32, 4> rnn_actor_target;
+#if defined(LEARNING_TO_FLY_ACTOR_LSTM)
+        using RecurrentActor = rnn::GatedActor<true>;
+#elif defined(LEARNING_TO_FLY_ACTOR_GRU)
+        using RecurrentActor = rnn::GatedActor<false>;
+#else
+        using RecurrentActor = rnn::RNNActor<>;
+#endif
+        RecurrentActor rnn_actor;
+        RecurrentActor rnn_actor_target;
     };
 }

@@ -72,6 +72,15 @@ int main() {
 
     rlt::set(rb.truncated, 1, 0, false);
 
+    // Termination is allowed on the sampled transition, but not in its history.
+    rlt::set(rb.terminated, 2, 0, true);
+    if (!learning_to_fly::rnn::extract_sequence<SEQ_LEN, CAPACITY>(rb, 2, sequence) ||
+        learning_to_fly::rnn::extract_sequence<SEQ_LEN, CAPACITY>(rb, 3, sequence)) {
+        std::cerr << "Terminal transition alignment FAILED\n";
+        return 1;
+    }
+    rlt::set(rb.terminated, 2, 0, false);
+
     // Test 3: full circular buffer, position = oldest slot.
     rb.full = true;
     rb.position = 2;
