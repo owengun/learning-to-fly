@@ -322,11 +322,7 @@ namespace learning_to_fly {
                 auto& target = ts.rnn_actor_target;
                 auto& buffers = ts.critic_training_buffers;
                 for (TI row = 0; row < batch_size; ++row) {
-                    target.reset();
-                    typename RNN::Output action{};
-                    for (const auto& observation : next_sequences[row]) {
-                        action = target.forward(observation);
-                    }
+                    const auto action = rnn::forward_sequence(target, next_sequences[row]);
                     for (TI j = 0; j < CONFIG::ENVIRONMENT::ACTION_DIM; ++j) {
                         rlt::set(buffers.next_actions, row, j, action[j]);
                     }
@@ -438,6 +434,10 @@ namespace learning_to_fly {
                 ts.rnn_actor,
                 filename
             );
+
+            const auto target_filename = std::filesystem::path(filename).parent_path() /
+                ("target_step_" + std::to_string(ts.step) + ".txt");
+            saved = rnn::save_actor(ts.rnn_actor_target, target_filename) && saved;
 
             if (saved) {
                 std::cout
