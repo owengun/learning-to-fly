@@ -1,0 +1,10 @@
+# Compiled binaries
+*.exe
+*.obj
+*.pdb
+*.ilk
+
+# Temporary compiler files
+*.idb
+
+# Keep experiment source code and results

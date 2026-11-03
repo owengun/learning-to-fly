@@ -1,0 +1,44 @@
+Epoch 0 Loss: 0.0386454
+Epoch 500 Loss: 0.0794336
+Epoch 1000 Loss: 0.0768867
+Epoch 1500 Loss: 0.0763277
+Epoch 2000 Loss: 0.181303
+Epoch 2500 Loss: 0.00603062
+Epoch 3000 Loss: 0.000761893
+Epoch 3500 Loss: 0.0171584
+Epoch 4000 Loss: 0.00705897
+Epoch 4500 Loss: 0.02309
+Epoch 5000 Loss: 0.1757
+Epoch 5500 Loss: 0.20019
+Epoch 6000 Loss: 0.218593
+Epoch 6500 Loss: 0.00245001
+Epoch 7000 Loss: 0.0988843
+Epoch 7500 Loss: 0.249396
+Epoch 8000 Loss: 0.112211
+Epoch 8500 Loss: 0.061007
+Epoch 9000 Loss: 0.0802703
+Epoch 9500 Loss: 0.0240643
+Epoch 10000 Loss: 0.000951678
+Epoch 10500 Loss: 0.10214
+Epoch 11000 Loss: 0.0924049
+Epoch 11500 Loss: 0.0146135
+Epoch 12000 Loss: 0.203161
+Epoch 12500 Loss: 0.186367
+Epoch 13000 Loss: 0.193754
+Epoch 13500 Loss: 0.183588
+Epoch 14000 Loss: 0.139919
+Epoch 14500 Loss: 0.078321
+Epoch 15000 Loss: 0.0517759
+Epoch 15500 Loss: 0.0840699
+Epoch 16000 Loss: 0.028082
+Epoch 16500 Loss: 0.0596415
+Epoch 17000 Loss: 0.00484902
+Epoch 17500 Loss: 5.22515e-05
+Epoch 18000 Loss: 0.00537223
+Epoch 18500 Loss: 0.000787221
+Epoch 19000 Loss: 0.000407394
+Epoch 19500 Loss: 0.00023146
+First loss: 0.0386454
+Last loss: 7.48869e-05
+Expected output: 0.7
+Predicted output: 0.690818

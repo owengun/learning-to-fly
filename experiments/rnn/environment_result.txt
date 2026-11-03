@@ -1,0 +1,12 @@
+Observation dimension: 146
+Action dimension: 4
+Step 0 position x: -0.00767117 hidden[0]: 0.0426993 action[0]: -0.032468
+Step 1 position x: -0.0138064 hidden[0]: 0.0178219 action[0]: -0.028599
+Step 2 position x: -0.0196651 hidden[0]: -0.00182017 action[0]: -0.0279204
+Step 3 position x: -0.0252513 hidden[0]: -0.00697398 action[0]: -0.027278
+Step 4 position x: -0.0305682 hidden[0]: -0.0178293 action[0]: -0.026678
+Step 5 position x: -0.0356188 hidden[0]: -0.0255669 action[0]: -0.0250143
+Step 6 position x: -0.0404054 hidden[0]: -0.0340874 action[0]: -0.0231546
+Step 7 position x: -0.0449296 hidden[0]: -0.0419252 action[0]: -0.0210024
+Step 8 position x: -0.0491918 hidden[0]: -0.0493311 action[0]: -0.0179786
+Step 9 position x: -0.0531916 hidden[0]: -0.0540973 action[0]: -0.0151064
