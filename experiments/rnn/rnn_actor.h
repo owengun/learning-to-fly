@@ -185,6 +185,113 @@ struct RNNActor {
 
         return loss;
     }
+    
+    // Train the RNN using an external gradient dLoss/dAction.
+    // This allows a critic to supply the actor's policy gradient.
+    template <std::size_t SEQ_LEN>
+    void train_sequence_with_gradient(
+        const std::array<Input, SEQ_LEN>& inputs,
+        const Output& action_gradient,
+        float learning_rate = 0.001f
+    ) {
+        static_assert(SEQ_LEN > 0, "Sequence must not be empty");
+
+        // Start with zero hidden state.
+        reset();
+
+        std::array<Hidden, SEQ_LEN + 1> states{};
+        Output output{};
+
+        // Forward through the entire sequence.
+        for (std::size_t t = 0; t < SEQ_LEN; ++t) {
+            output = forward(inputs[t]);
+            states[t + 1] = hidden;
+        }
+
+        // Convert dLoss/dAction into dLoss/dPreActivation.
+        Output delta_out{};
+
+        for (std::size_t i = 0; i < OUTPUT_DIM; ++i) {
+            delta_out[i] =
+                action_gradient[i] *
+                (1.0f - output[i] * output[i]);
+        }
+
+        // Parameter gradients.
+        decltype(W_x) gWx{};
+        decltype(W_h) gWh{};
+        decltype(b_h) gbh{};
+        decltype(W_out) gWout{};
+        decltype(b_out) gbout{};
+
+        Hidden dh{};
+
+        // Output layer backward.
+        for (std::size_t i = 0; i < OUTPUT_DIM; ++i) {
+            gbout[i] += delta_out[i];
+
+            for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
+                gWout[i][j] +=
+                    delta_out[i] * states[SEQ_LEN][j];
+
+                dh[j] +=
+                    W_out[i][j] * delta_out[i];
+            }
+        }
+
+        // Backpropagation through time.
+        for (std::size_t t = SEQ_LEN; t > 0; --t) {
+            Hidden delta_h{};
+            Hidden dh_previous{};
+
+            for (std::size_t i = 0; i < HIDDEN_DIM; ++i) {
+                float h = states[t][i];
+
+                delta_h[i] =
+                    dh[i] * (1.0f - h * h);
+
+                gbh[i] += delta_h[i];
+
+                for (std::size_t j = 0; j < INPUT_DIM; ++j) {
+                    gWx[i][j] +=
+                        delta_h[i] * inputs[t - 1][j];
+                }
+
+                for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
+                    gWh[i][j] +=
+                        delta_h[i] * states[t - 1][j];
+
+                    dh_previous[j] +=
+                        W_h[i][j] * delta_h[i];
+                }
+            }
+
+            dh = dh_previous;
+        }
+
+        // SGD parameter update.
+        for (std::size_t i = 0; i < HIDDEN_DIM; ++i) {
+            b_h[i] -= learning_rate * gbh[i];
+
+            for (std::size_t j = 0; j < INPUT_DIM; ++j) {
+                W_x[i][j] -= learning_rate * gWx[i][j];
+            }
+
+            for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
+                W_h[i][j] -= learning_rate * gWh[i][j];
+            }
+        }
+
+        for (std::size_t i = 0; i < OUTPUT_DIM; ++i) {
+            b_out[i] -= learning_rate * gbout[i];
+
+            for (std::size_t j = 0; j < HIDDEN_DIM; ++j) {
+                W_out[i][j] -=
+                    learning_rate * gWout[i][j];
+            }
+        }
+    }
+
 };
 
 } // namespace learning_to_fly::rnn
