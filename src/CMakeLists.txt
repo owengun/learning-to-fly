@@ -71,3 +71,7 @@ endforeach()
 
 add_executable(test_gated_actor ../experiments/rnn/test_gated_actor.cpp)
 target_compile_features(test_gated_actor PRIVATE cxx_std_17)
+
+add_executable(test_original_mlp_checkpoint test_original_mlp_checkpoint.cpp)
+target_link_libraries(test_original_mlp_checkpoint PRIVATE rl_tools learning_to_fly)
+target_compile_definitions(test_original_mlp_checkpoint PRIVATE LEARNING_TO_FLY_ACTOR_MLP)

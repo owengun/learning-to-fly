@@ -42,3 +42,8 @@ retry uses a new attempt directory. Actor and target weights are saved
 separately at each checkpoint. The training executable can warm-start actor
 weights, with fresh replay, critics, optimizer, simulator and random state.
 Exact mid-run training continuation is outside this checkpoint format.
+
+The completed supplemental original-MLP comparison is documented in
+ORIGINAL_BASELINE_AUDIT.md. It uses training_mlp with 146 inputs and the
+original training algorithm, with the same standalone evaluation protocol.
+Run run_original_mlp.py to reproduce the supplemental three-seed experiment.
