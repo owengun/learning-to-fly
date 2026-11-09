@@ -65,3 +65,52 @@ GRUs. They provide one seed for the parameter-matched replacement.
 The local archive build2026/gru-full-seed0 contains Release test logs,
 the run manifest, checkpoint hashes, optimizer diagnostics, the screening
 decision, raw flight CSVs and the thrust comparison.
+
+## Full-budget seed 0 run
+
+The stopped screen had weight-only snapshots. The full-budget run restarted
+from seed 0 using the archived 146-input GRU executable, with its settings
+unchanged. The first 11 Actor and target checkpoints and all corresponding
+returns matched the original screen exactly. It completed 300,001
+interactions and scored 31 checkpoints with ten fresh no-exploration
+episodes apiece. All compared MLP checkpoints come from its existing
+seed-0 full-budget run.
+
+    python -B experiments/rnn/run_gru_full_budget.py --screen build2026/gru-full-seed0/run --mlp build2026/curriculum-pilot-seed0/seed-0/mlp-original/attempt-0001 --output build2026/gru-full-budget-seed0/run
+
+| Checkpoint | Original MLP mean steps / completions | Full GRU mean steps / completions |
+| ---: | ---: | ---: |
+| 100000 | 61.6 / 0 of 10 | 66.7 / 0 of 10 |
+| 160000 | 200.4 / 0 of 10 | 116.5 / 0 of 10 |
+| 170000 | 134.4 / 0 of 10 | 411.3 / 8 of 10 |
+| 180000 | 221.6 / 2 of 10 | 500.0 / 10 of 10 |
+| 200000 | 460.2 / 9 of 10 | 456.1 / 9 of 10 |
+| 240000 | 500.0 / 10 of 10 | 411.1 / 8 of 10 |
+| 300000 | 454.9 / 9 of 10 | 456.4 / 9 of 10 |
+
+The first observed GRU completion was at 170,000 steps, and its first
+10/10 checkpoint was at 180,000. The MLP first reached 10/10 at 240,000.
+The GRU's mean flight length moved from 50.8 at 90,000 to 66.7 just before
+the first curriculum update and 56.5 at 110,000. It went from 500.0 at
+190,000 to 456.1 just before the second update and 286.8 at 210,000.
+It recovered to 10/10 at 230,000 and fluctuated thereafter. These are
+observations around updates, without a separate curriculum ablation.
+
+At 300,000, both methods had one downward exit. Mean return was +138.20
+for MLP and -400.69 for GRU. The mean vertical motor thrust across all
+final episodes was 0.663 vs 0.575 vehicle weights over the first ten
+steps, and 1.048 vs 1.046 over the last five. These estimates exclude
+external forces.
+
+The reward audit reconstructed the recorded reward for all 4,491 steps
+after the first transition in each method's nine completed episodes.
+The GRU's mean position cost was 2.577 per step compared with 1.160
+for MLP. GRU's orientation, velocity and action costs were lower on
+average. Over the last 100 steps of completed episodes, mean altitude
+was -0.277 m for GRU and +0.117 m for MLP. Mean final distance from
+the origin was 0.327 m and 0.216 m respectively. Final survival was
+similar for this seed, while the GRU held a larger position offset.
+
+The full run archive is build2026/gru-full-budget-seed0/run. It contains
+all checkpoints, raw trajectories, 31 paired summaries, optimizer
+diagnostics, run and checkpoint hashes, the report and reward diagnosis.
