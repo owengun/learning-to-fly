@@ -11,7 +11,7 @@ struct GatedActor {
     using Hidden = typename Base::Hidden;
     using Output = typename Base::Output;
     static constexpr bool recurrent = true;
-    static constexpr const char* name = LSTM ? "lstm" : "gru";
+    static constexpr const char* name = LSTM ? "lstm" : (I == 22 ? "gru-history" : "gru");
     static constexpr std::size_t gate_count = LSTM ? 4 : 3;
 
     struct Gate {
@@ -78,6 +78,24 @@ struct GatedActor {
     }
 
     void initialize(unsigned seed) {
+        if constexpr (!LSTM && I == 22) {
+            // Match the 18-feature reference at initialization.
+            GatedActor<false, 18, H, O> reference;
+            reference.initialize(seed);
+            for (std::size_t k = 0; k < gate_count; ++k) {
+                gates[k].recurrent = reference.gates[k].recurrent;
+                gates[k].bias = reference.gates[k].bias;
+                for (std::size_t i = 0; i < H; ++i) {
+                    gates[k].input[i].fill(0);
+                    for (std::size_t j = 0; j < 18; ++j)
+                        gates[k].input[i][j] = reference.gates[k].input[i][j];
+                }
+            }
+            W_out = reference.W_out;
+            b_out = reference.b_out;
+            reset();
+            return;
+        }
         std::mt19937 rng(seed);
         std::uniform_real_distribution<float> dist(-0.1f, 0.1f);
         visit_parameters(*this, [&](float& value) { value = dist(rng); });
@@ -131,23 +149,34 @@ struct GatedActor {
     void accumulate_sequence_gradient(const std::array<Input, N>& inputs,
                                       const Output& gradient, Gradients& gradients) const {
         static_assert(N > 0);
+        std::array<Output, N> upstream{};
+        upstream.back() = gradient;
+        accumulate_window_gradient(inputs.data(), N, State{}, upstream, gradients);
+    }
+
+    // initial_state comes from the burn-in prefix and is held fixed during BPTT.
+    template <std::size_t N>
+    void accumulate_window_gradient(const Input* inputs, std::size_t count,
+                                    const State& initial_state,
+                                    const std::array<Output, N>& upstream,
+                                    Gradients& gradients) const {
         std::array<Frame, N + 1> frames{};
-        for (std::size_t t = 0; t < N; ++t)
+        frames[0].state = initial_state;
+        for (std::size_t t = 0; t < count; ++t)
             frames[t + 1] = advance(inputs[t], frames[t].state);
 
-        const auto& last = frames.back().state.h;
-        const auto output = action(last);
         Hidden dh{}, dc{};
-        for (std::size_t i = 0; i < O; ++i) {
-            float delta = gradient[i] * (1 - output[i] * output[i]);
-            gradients.bias[i] += delta;
-            for (std::size_t j = 0; j < H; ++j) {
-                gradients.output[i][j] += delta * last[j];
-                dh[j] += delta * W_out[i][j];
+        for (std::size_t t = count; t > 0; --t) {
+            const auto& h = frames[t].state.h;
+            const auto output = action(h);
+            for (std::size_t i = 0; i < O; ++i) {
+                const float delta = upstream[t - 1][i] * (1 - output[i] * output[i]);
+                gradients.bias[i] += delta;
+                for (std::size_t j = 0; j < H; ++j) {
+                    gradients.output[i][j] += delta * h[j];
+                    dh[j] += delta * W_out[i][j];
+                }
             }
-        }
-
-        for (std::size_t t = N; t > 0; --t) {
             const auto& frame = frames[t];
             const auto& previous = frames[t - 1].state;
             const auto& g = frame.gate;
@@ -190,6 +219,21 @@ struct GatedActor {
             }
             dh = previous_dh;
         }
+    }
+
+    static double gradient_norm(const Gradients& gradients) {
+        double squared = 0;
+        auto add = [&](const auto& values) {
+            for (double value : values) squared += value * value;
+        };
+        for (const auto& gate : gradients.gates) {
+            for (const auto& row : gate.input) add(row);
+            for (const auto& row : gate.recurrent) add(row);
+            add(gate.bias);
+        }
+        for (const auto& row : gradients.output) add(row);
+        add(gradients.bias);
+        return std::sqrt(squared);
     }
 
     void apply_gradients(const Gradients& gradients, float rate) {

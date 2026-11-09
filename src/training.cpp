@@ -29,8 +29,11 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
         *trajectory << "episode,step,dt_s,reward,terminated,time_limit,"
                        "x_m,y_m,z_m,qw,qx,qy,qz,vx_m_s,vy_m_s,vz_m_s,"
                        "wx_rad_s,wy_rad_s,wz_rad_s,rpm_0,rpm_1,rpm_2,rpm_3,"
-                       "action_0,action_1,action_2,action_3\n"
-                    << std::setprecision(std::numeric_limits<T>::max_digits10);
+                       "action_0,action_1,action_2,action_3";
+#if defined(LEARNING_TO_FLY_ACTOR_GRU) || defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
+        *trajectory << ",hidden_l2,update_mean,reset_mean,update_saturated,reset_saturated,candidate_saturated";
+#endif
+        *trajectory << '\n' << std::setprecision(std::numeric_limits<T>::max_digits10);
     }
     double total = 0;
     for (unsigned episode = 0; episode < episodes; ++episode) {
@@ -40,12 +43,30 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
         typename Environment::State state, next_state;
         rlt::sample_initial_state(ts.device, env, state, rng);
         double episode_return = 0;
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+        std::array<float, 4> previous_action{};
+#endif
         for (TI t = 0; t < CONFIG::ENVIRONMENT_STEP_LIMIT_EVALUATION; ++t) {
             rlt::observe(ts.device, env, state, observation, rng);
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
-            auto output = ts.rnn_actor.forward(
-                learning_to_fly::rnn::extract_rltools_observation(observation)
-            );
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+            auto input = learning_to_fly::rnn::extract_rltools_observation(observation);
+            learning_to_fly::rnn::HistoryInput augmented{};
+            std::copy(input.begin(), input.end(), augmented.begin());
+            std::copy(previous_action.begin(), previous_action.end(), augmented.begin() + 18);
+            const auto frame = ts.rnn_actor.advance(augmented, ts.rnn_actor.hidden);
+            ts.rnn_actor.hidden = frame.state;
+            const auto output = ts.rnn_actor.action(frame.state.h);
+            previous_action = output;  // Evaluation disables action exploration and action noise.
+#elif defined(LEARNING_TO_FLY_ACTOR_GRU)
+            auto input = learning_to_fly::rnn::extract_rltools_observation(observation);
+            const auto frame = ts.rnn_actor.advance(input, ts.rnn_actor.hidden);
+            ts.rnn_actor.hidden = frame.state;
+            const auto output = ts.rnn_actor.action(frame.state.h);
+#else
+            const auto output = ts.rnn_actor.forward(
+                learning_to_fly::rnn::extract_rltools_observation(observation));
+#endif
             for (TI j = 0; j < Environment::ACTION_DIM; ++j)
                 rlt::set(action, 0, j, output[j]);
 #else
@@ -66,6 +87,23 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
                 for (T value : next_state.rpm) *trajectory << ',' << value;
                 for (TI j = 0; j < Environment::ACTION_DIM; ++j)
                     *trajectory << ',' << rlt::get(action, 0, j);
+#if defined(LEARNING_TO_FLY_ACTOR_GRU) || defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
+                double hidden_sq = 0, update = 0, reset = 0;
+                std::size_t update_sat = 0, reset_sat = 0, candidate_sat = 0;
+                const auto n = frame.state.h.size();
+                for (std::size_t i = 0; i < n; ++i) {
+                    hidden_sq += frame.state.h[i] * frame.state.h[i];
+                    update += frame.gate[0][i];
+                    reset += frame.gate[1][i];
+                    update_sat += frame.gate[0][i] <= 0.05f || frame.gate[0][i] >= 0.95f;
+                    reset_sat += frame.gate[1][i] <= 0.05f || frame.gate[1][i] >= 0.95f;
+                    candidate_sat += std::abs(frame.gate[2][i]) >= 0.95f;
+                }
+                *trajectory << ',' << std::sqrt(hidden_sq) << ',' << update / n << ','
+                            << reset / n << ',' << static_cast<double>(update_sat) / n << ','
+                            << static_cast<double>(reset_sat) / n << ','
+                            << static_cast<double>(candidate_sat) / n;
+#endif
                 *trajectory << '\n';
             }
             if (terminated) break;

@@ -63,6 +63,55 @@ bool extract_sequence(
     return true;
 }
 
+template <typename DEVICE, typename REPLAY_BUFFER, typename BATCH>
+void copy_replay_transition(DEVICE& device, const REPLAY_BUFFER& rb, BATCH& batch,
+                            std::size_t physical, std::size_t row_i) {
+    namespace rlt = RL_TOOLS_NAMESPACE_WRAPPER::rl_tools;
+    // Transfer the exact same transition into TD3 batch.
+    auto obs_source =
+        rlt::row(device, rb.observations, physical);
+    auto obs_target =
+        rlt::row(device, batch.observations, row_i);
+    rlt::copy(device, device, obs_source, obs_target);
+
+    auto priv_source =
+        rlt::row(device, rb.observations_privileged, physical);
+    auto priv_target =
+        rlt::row(device, batch.observations_privileged, row_i);
+    rlt::copy(device, device, priv_source, priv_target);
+
+    auto action_source =
+        rlt::row(device, rb.actions, physical);
+    auto action_target =
+        rlt::row(device, batch.actions, row_i);
+    rlt::copy(device, device, action_source, action_target);
+
+    auto next_source =
+        rlt::row(device, rb.next_observations, physical);
+    auto next_target =
+        rlt::row(device, batch.next_observations, row_i);
+    rlt::copy(device, device, next_source, next_target);
+
+    auto next_priv_source =
+        rlt::row(device, rb.next_observations_privileged, physical);
+    auto next_priv_target =
+        rlt::row(device, batch.next_observations_privileged, row_i);
+    rlt::copy(device, device, next_priv_source, next_priv_target);
+
+    rlt::set(
+        batch.rewards, 0, row_i,
+        rlt::get(rb.rewards, physical, 0)
+    );
+    rlt::set(
+        batch.terminated, 0, row_i,
+        rlt::get(rb.terminated, physical, 0)
+    );
+    rlt::set(
+        batch.truncated, 0, row_i,
+        rlt::get(rb.truncated, physical, 0)
+    );
+}
+
 template <
     std::size_t SEQ_LEN,
     std::size_t CAPACITY,
@@ -140,49 +189,7 @@ bool gather_aligned_sequence_batch(
                 );
         }
 
-        // Transfer the exact same transition into TD3 batch.
-        auto obs_source =
-            rlt::row(device, rb.observations, physical);
-        auto obs_target =
-            rlt::row(device, batch.observations, row_i);
-        rlt::copy(device, device, obs_source, obs_target);
-
-        auto priv_source =
-            rlt::row(device, rb.observations_privileged, physical);
-        auto priv_target =
-            rlt::row(device, batch.observations_privileged, row_i);
-        rlt::copy(device, device, priv_source, priv_target);
-
-        auto action_source =
-            rlt::row(device, rb.actions, physical);
-        auto action_target =
-            rlt::row(device, batch.actions, row_i);
-        rlt::copy(device, device, action_source, action_target);
-
-        auto next_source =
-            rlt::row(device, rb.next_observations, physical);
-        auto next_target =
-            rlt::row(device, batch.next_observations, row_i);
-        rlt::copy(device, device, next_source, next_target);
-
-        auto next_priv_source =
-            rlt::row(device, rb.next_observations_privileged, physical);
-        auto next_priv_target =
-            rlt::row(device, batch.next_observations_privileged, row_i);
-        rlt::copy(device, device, next_priv_source, next_priv_target);
-
-        rlt::set(
-            batch.rewards, 0, row_i,
-            rlt::get(rb.rewards, physical, 0)
-        );
-        rlt::set(
-            batch.terminated, 0, row_i,
-            rlt::get(rb.terminated, physical, 0)
-        );
-        rlt::set(
-            batch.truncated, 0, row_i,
-            rlt::get(rb.truncated, physical, 0)
-        );
+        copy_replay_transition(device, rb, batch, physical, row_i);
     }
 
     return true;

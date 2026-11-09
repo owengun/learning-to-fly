@@ -274,6 +274,20 @@ bool train_rnn_actor_td3(
         );
     }
 
+#ifdef LEARNING_TO_FLY_ACTOR_GRU
+    if (ts.step % 1000 == 0 || ts.step == CONFIG::N_WARMUP_STEPS_ACTOR +
+                                         CONFIG::TD3_PARAMETERS::ACTOR_TRAINING_INTERVAL) {
+        double sum = 0, max_abs = 0;
+        for (std::size_t row = 0; row < BATCH_SIZE; ++row) {
+            const double q = rlt::get(buffers.state_action_value, row, 0);
+            sum += q;
+            max_abs = std::max(max_abs, std::abs(q));
+        }
+        std::cout << "[GRU Diagnostics] step,q_mean,q_abs_max,grad_l2,mean_burn "
+                  << ts.step << ',' << sum / BATCH_SIZE << ',' << max_abs << ','
+                  << rnn.gradient_norm(gradients) << ",0\n";
+    }
+#endif
     rnn.apply_gradients(gradients, learning_rate);
 
     // --------------------------------------------

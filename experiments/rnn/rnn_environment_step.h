@@ -3,6 +3,9 @@
 
 #include "rnn_actor.h"
 #include "observation_adapter.h"
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#include "action_history_sampler.h"
+#endif
 
 namespace learning_to_fly::rnn {
 
@@ -16,7 +19,8 @@ void rnn_environment_step(TS& ts, RNN& actor) {
 
     // Before a new episode, discard the previous hidden state.
     // Initial runner.truncated is also true.
-    if (rlt::get(runner.truncated, 0, 0)) {
+    const bool episode_start = rlt::get(runner.truncated, 0, 0);
+    if (episode_start) {
         actor.reset();
     }
 
@@ -26,9 +30,13 @@ void rnn_environment_step(TS& ts, RNN& actor) {
     );
 
     // One environment, as in the current project configuration.
-    auto input = extract_rltools_observation(
-        runner.buffers.observations
-    );
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+    // Epilogue left the previous action after exploration and clipping here.
+    auto input = history_input(runner.buffers.observations, 0, runner.buffers.actions, 0,
+                               episode_start);
+#else
+    auto input = extract_rltools_observation(runner.buffers.observations);
+#endif
 
     // RNN generates four motor actions.
     auto action = actor.forward(input);

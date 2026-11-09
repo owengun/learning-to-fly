@@ -35,6 +35,9 @@ namespace rlt = RL_TOOLS_NAMESPACE_WRAPPER::rl_tools;
 #include "../experiments/rnn/rnn_td3_actor_update.h"
 #include "../experiments/rnn/rnn_td3_critic_update.h"
 #include "../experiments/rnn/rnn_environment_step.h"
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#include "../experiments/rnn/action_history_update.h"
+#endif
 #include "../experiments/rnn/actor_checkpoint.h"
 #endif
 
@@ -189,6 +192,36 @@ namespace learning_to_fly {
             ts.device.logger,
             ts.step
         );
+        // ----------------------------------------
+        // Save RNN weights every 10000 steps
+        // ----------------------------------------
+
+        if (ts.step % 10000 == 0 ||
+            save_final_checkpoint || ts.step + 1 >= CONFIG::STEP_LIMIT) {
+
+            std::string filename =
+                std::string("checkpoints/") + decltype(ts.rnn_actor)::name + "/actor_step_" +
+                std::to_string(ts.step) +
+                ".txt";
+
+            bool saved = rnn::save_actor(
+                ts.rnn_actor,
+                filename
+            );
+
+            const auto target_filename = std::filesystem::path(filename).parent_path() /
+                ("target_step_" + std::to_string(ts.step) + ".txt");
+            saved = rnn::save_actor(ts.rnn_actor_target, target_filename) && saved;
+
+            if (saved) {
+                std::cout
+                    << "[RNN] Weights saved at step "
+                    << ts.step
+                    << std::endl;
+            }
+        }
+
+
         steps::curriculum(ts);
 
         // ----------------------------------------
@@ -305,6 +338,7 @@ namespace learning_to_fly {
                     CRITIC_TRAINING_INTERVAL == 0
         ) {
 
+#ifndef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
             constexpr std::size_t sequence_length = 8;
             constexpr auto capacity = CONFIG::OFF_POLICY_RUNNER_SPEC::REPLAY_BUFFER_CAPACITY;
             using RNN = decltype(ts.rnn_actor_target);
@@ -313,7 +347,12 @@ namespace learning_to_fly {
             std::array<Sequence, batch_size> current_sequences;
             std::array<Sequence, batch_size> next_sequences;
 
+#endif
             for (TI critic_i = 0; critic_i < 2; ++critic_i) {
+                auto& buffers = ts.critic_training_buffers;
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+                if (!rnn::gather_history_critic(ts)) continue;
+#else
                 if (!rnn::gather_aligned_sequence_batch<sequence_length, capacity>(
                         ts.device, ts.off_policy_runner.replay_buffers[0],
                         ts.critic_batch, current_sequences, next_sequences, ts.rng)) {
@@ -321,7 +360,6 @@ namespace learning_to_fly {
                 }
 
                 auto& target = ts.rnn_actor_target;
-                auto& buffers = ts.critic_training_buffers;
                 for (TI row = 0; row < batch_size; ++row) {
                     const auto action = rnn::forward_sequence(target, next_sequences[row]);
                     for (TI j = 0; j < CONFIG::ENVIRONMENT::ACTION_DIM; ++j) {
@@ -329,6 +367,7 @@ namespace learning_to_fly {
                     }
                 }
 
+#endif
                 rlt::target_action_noise(
                     ts.device, ts.actor_critic, buffers.target_next_action_noise, ts.rng
                 );
@@ -355,12 +394,16 @@ namespace learning_to_fly {
 
         
             // Actual RNN Actor gradient update.
-            bool updated =
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+            const bool updated = rnn::train_history_actor(ts, 0.0001f);
+#else
+            const bool updated =
                 rnn::train_rnn_actor_td3<8>(
                     ts,
                     ts.rnn_actor,
                     0.0001f
                 );
+#endif
 
             static unsigned long long
                 rnn_update_count = 0;
@@ -416,36 +459,6 @@ namespace learning_to_fly {
         ) {
             rnn::update_target(ts.rnn_actor_target, ts.rnn_actor,
                                CONFIG::TD3_PARAMETERS::ACTOR_POLYAK);
-        }
-
-
-        // ----------------------------------------
-        // Save RNN weights every 10000 steps
-        // ----------------------------------------
-
-        if (ts.step % 10000 == 0 ||
-            save_final_checkpoint || ts.step + 1 >= CONFIG::STEP_LIMIT) {
-
-            std::string filename =
-                std::string("checkpoints/") + decltype(ts.rnn_actor)::name + "/actor_step_" +
-                std::to_string(ts.step) +
-                ".txt";
-
-            bool saved = rnn::save_actor(
-                ts.rnn_actor,
-                filename
-            );
-
-            const auto target_filename = std::filesystem::path(filename).parent_path() /
-                ("target_step_" + std::to_string(ts.step) + ".txt");
-            saved = rnn::save_actor(ts.rnn_actor_target, target_filename) && saved;
-
-            if (saved) {
-                std::cout
-                    << "[RNN] Weights saved at step "
-                    << ts.step
-                    << std::endl;
-            }
         }
 
 
