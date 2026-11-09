@@ -6,6 +6,9 @@
 #include <iomanip>
 #include <limits>
 #include <string_view>
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#include <thread>
+#endif
 #include "original_mlp_checkpoint.h"
 
 template <typename CONFIG>
@@ -120,6 +123,29 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
 #endif
 }
 
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+bool await_screen_decision(const std::filesystem::path& directory) {
+    {
+        std::ofstream ready(directory / "ready");
+        ready << "100000\n";
+        ready.close();
+        if (!ready) throw std::runtime_error("Cannot write screening gate marker");
+    }
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::minutes(5);
+    while (std::chrono::steady_clock::now() < deadline) {
+        std::ifstream decision(directory / "decision");
+        std::string command;
+        if (decision >> command) {
+            if (command == "continue") return true;
+            if (command == "stop") return false;
+            throw std::runtime_error("Invalid screening decision");
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    throw std::runtime_error("Timed out awaiting screening decision");
+}
+#endif
+
 int main(int argc, char** argv) {
     using CONFIG = learning_to_fly::config::Config<learning_to_fly::config::DEFAULT_ABLATION_SPEC>;
     using TI = typename CONFIG::TI;
@@ -129,6 +155,9 @@ int main(int argc, char** argv) {
     std::string checkpoint;
     std::string trajectory_path;
     bool evaluation_only = false;
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+    std::filesystem::path screen_gate;
+#endif
     auto parse = [](std::string_view value, auto& destination) {
         auto end = value.data() + value.size();
         auto result = std::from_chars(value.data(), end, destination);
@@ -150,6 +179,12 @@ int main(int argc, char** argv) {
                 evaluation_only = option == "--evaluate";
                 continue;
             }
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+            if (option == "--screen-gate" && screen_gate.empty()) {
+                screen_gate = value;
+                continue;
+            }
+#endif
             if (option == "--episodes" && parse(value, episodes) && episodes > 0) continue;
             if (option == "--trajectory-csv" && trajectory_path.empty()) {
                 trajectory_path = value;
@@ -162,7 +197,11 @@ int main(int argc, char** argv) {
 #else
                   << " [--evaluate FILE] [--episodes N]"
 #endif
-                  << " [--trajectory-csv FILE]\n";
+                  << " [--trajectory-csv FILE]"
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+                  << " [--screen-gate DIRECTORY]"
+#endif
+                  << '\n';
         return 2;
     }
     if (!trajectory_path.empty() && !evaluation_only) {
@@ -170,6 +209,15 @@ int main(int argc, char** argv) {
         return 2;
     }
 
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+    if (!screen_gate.empty() &&
+        (steps <= 100001 || !checkpoint.empty() || !std::filesystem::is_directory(screen_gate) ||
+         std::filesystem::exists(screen_gate / "ready") ||
+         std::filesystem::exists(screen_gate / "decision"))) {
+        std::cerr << "--screen-gate requires a fresh gate directory and a new run beyond 100001 steps\n";
+        return 2;
+    }
+#endif
     auto start = std::chrono::high_resolution_clock::now();
     learning_to_fly::TrainingState<CONFIG> ts;
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
@@ -179,6 +227,9 @@ int main(int argc, char** argv) {
 #endif
     std::cout << " seed " << CONFIG::BASE_SEED + seed << " steps " << steps << '\n';
     learning_to_fly::init(ts, static_cast<TI>(seed));
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+    std::cout << "GRU Actor optimizer Adam, using the original MLP parameter configuration\n";
+#endif
     if (!checkpoint.empty()) {
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
         const bool loaded = learning_to_fly::rnn::load_actor(ts.rnn_actor, checkpoint);
@@ -227,8 +278,36 @@ int main(int argc, char** argv) {
             }
         }
 #endif
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+        try {
+            learning_to_fly::step(ts, i + 1 == steps);
+            if (i == 100000 && !screen_gate.empty() && !await_screen_decision(screen_gate)) break;
+        } catch (const std::exception& error) {
+            std::cerr << "GRU Adam stopped at step " << i << " - " << error.what() << '\n';
+            const auto directory = std::filesystem::path("failure") / ("step_" + std::to_string(i));
+            try {
+                std::filesystem::create_directories(directory);
+                std::ofstream metadata(directory / "reason.txt");
+                metadata << error.what() << '\n';
+                metadata.flush();
+                const bool actor_saved = learning_to_fly::rnn::save_actor(ts.rnn_actor, directory / "actor.txt");
+                const bool target_saved = learning_to_fly::rnn::save_actor(ts.rnn_actor_target, directory / "target.txt");
+                const bool optimizer_saved = ts.history_adam.save_diagnostic_state(directory / "actor_adam.csv");
+                if (!metadata || !actor_saved || !target_saved || !optimizer_saved)
+                    std::cerr << "Failure snapshot write incomplete\n";
+            } catch (const std::exception& snapshot_error) {
+                std::cerr << "Failure snapshot write failed - " << snapshot_error.what() << '\n';
+            }
+            learning_to_fly::destroy(ts);
+            return 1;
+        }
+#else
         learning_to_fly::step(ts, i + 1 == steps);
+#endif
     }
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+    std::cout << "Training finished at step " << ts.step << '\n';
+#endif
     learning_to_fly::destroy(ts);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Training took: " << std::chrono::duration<double>(end - start).count() << "s\n";

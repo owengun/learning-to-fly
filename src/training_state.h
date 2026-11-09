@@ -3,6 +3,9 @@
 #include <mutex>
 #include "../experiments/rnn/matched_mlp_actor.h"
 #include "../experiments/rnn/gated_actor.h"
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#include "../experiments/rnn/actor_adam.h"
+#endif
 namespace learning_to_fly{
     template <typename T_CONFIG>
     struct TrainingState: rlt::rl::algorithms::td3::loop::TrainingState<T_CONFIG>{
@@ -31,5 +34,8 @@ namespace learning_to_fly{
 #endif
         ExperimentActor rnn_actor;
         ExperimentActor rnn_actor_target;
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+        rnn::ActorAdam<ExperimentActor, typename CONFIG::OPTIMIZER::PARAMETERS> history_adam;
+#endif
     };
 }

@@ -25,6 +25,9 @@ bool gather_history_critic(TS& ts) {
             copy_replay_transition(ts.device, rb, ts.critic_batch, physical, row);
             state = actor.advance(window.inputs[window.burn + t], state).state;
             const auto action = next_history_action(actor, rb, physical, state);
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+            require_finite(action, "Non-finite target GRU action");
+#endif
             for (std::size_t j = 0; j < action.size(); ++j)
                 rlt::set(ts.critic_training_buffers.next_actions, row, j, action[j]);
         }
@@ -50,6 +53,11 @@ bool train_history_actor(TS& ts, float learning_rate) {
     std::vector<Sample> samples;
     samples.reserve(batch_size / HISTORY_LEARN + 1);
     std::size_t burn_steps = 0;
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+    const auto& dynamics = ts.off_policy_runner.envs[0].parameters.dynamics;
+    double update_gate_sum = 0, reset_gate_sum = 0;
+    double action_sum = 0, applied_sum = 0, thrust_sum = 0;
+#endif
     for (std::size_t row = 0; row < batch_size;) {
         auto& sample = samples.emplace_back();
         auto& window = sample.window;
@@ -62,8 +70,28 @@ bool train_history_actor(TS& ts, float learning_rate) {
             const auto physical = window.transitions[t];
             for (std::size_t j = 0; j < obs_dim; ++j)
                 rlt::set(buffers.observations, row, j, rlt::get(rb.observations_privileged, physical, j));
-            state = actor.advance(window.inputs[window.burn + t], state).state;
+            const auto frame = actor.advance(window.inputs[window.burn + t], state);
+            state = frame.state;
             const auto action = actor.action(state.h);
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+            require_finite(action, "Non-finite replay GRU action");
+            require_finite(frame.gate[0], "Non-finite GRU update gate");
+            require_finite(frame.gate[1], "Non-finite GRU reset gate");
+            for (double value : frame.gate[0]) update_gate_sum += value;
+            for (double value : frame.gate[1]) reset_gate_sum += value;
+            const auto& next = rlt::get(rb.next_states, physical, 0);
+            double thrust = 0;
+            for (std::size_t j = 0; j < action_dim; ++j) {
+                action_sum += action[j];
+                applied_sum += rlt::get(rb.actions, physical, j);
+                const double rpm = next.rpm[j];
+                thrust += dynamics.thrust_constants[0] + dynamics.thrust_constants[1] * rpm +
+                          dynamics.thrust_constants[2] * rpm * rpm;
+            }
+            const double qx = next.orientation[1], qy = next.orientation[2];
+            thrust_sum += thrust * (1 - 2 * (qx * qx + qy * qy)) /
+                          (dynamics.mass * std::abs(dynamics.gravity[2]));
+#endif
             for (std::size_t j = 0; j < action_dim; ++j)
                 rlt::set(buffers.actions, row, j, action[j]);
         }
@@ -87,20 +115,43 @@ bool train_history_actor(TS& ts, float learning_rate) {
                                          sample.initial, upstream, gradients);
     }
     const double grad_norm = actor.gradient_norm(gradients);
+    const bool log_update = ts.step % 1000 == 0 || ts.step == CONFIG::N_WARMUP_STEPS_ACTOR +
+                                                 CONFIG::TD3_PARAMETERS::ACTOR_TRAINING_INTERVAL;
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+    require_finite(std::array{update_gate_sum, reset_gate_sum, action_sum, applied_sum, thrust_sum},
+                   "Non-finite GRU replay diagnostics");
+#else
     if (!std::isfinite(grad_norm)) throw std::runtime_error("Non-finite GRU actor gradient");
-    if (ts.step % 1000 == 0 || ts.step == CONFIG::N_WARMUP_STEPS_ACTOR +
-                                         CONFIG::TD3_PARAMETERS::ACTOR_TRAINING_INTERVAL) {
+    if (log_update) {
+#endif
         double q_sum = 0, q_abs_max = 0;
         for (std::size_t i = 0; i < batch_size; ++i) {
             const double q = rlt::get(buffers.state_action_value, i, 0);
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+            if (!std::isfinite(q)) throw std::runtime_error("Non-finite GRU actor Q");
+#endif
             q_sum += q;
             q_abs_max = std::max(q_abs_max, std::abs(q));
         }
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+    const auto update = ts.history_adam.apply(actor, gradients);
+    if (log_update) {
+        constexpr auto gate_values = batch_size * std::tuple_size_v<typename Actor::Hidden>;
+        std::cout << "[GRU Adam Diagnostics] " << ts.step << ',' << ts.history_adam.updates
+                  << ',' << q_sum / batch_size << ',' << q_abs_max << ',' << grad_norm
+                  << ',' << update.update_l2 << ',' << update.parameter_l2
+                  << ',' << update_gate_sum / gate_values << ',' << reset_gate_sum / gate_values
+                  << ',' << action_sum / (batch_size * action_dim)
+                  << ',' << applied_sum / (batch_size * action_dim) << ',' << thrust_sum / batch_size
+                  << ',' << static_cast<double>(burn_steps) / samples.size() << '\n';
+    }
+#else
         std::cout << "[GRU Diagnostics] step,q_mean,q_abs_max,grad_l2,mean_burn "
                   << ts.step << ',' << q_sum / batch_size << ',' << q_abs_max << ','
                   << grad_norm << ',' << static_cast<double>(burn_steps) / samples.size() << '\n';
     }
     actor.apply_gradients(gradients, learning_rate);
+#endif
     return true;
 }
 
