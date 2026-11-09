@@ -33,9 +33,14 @@ namespace parameters{
         template<typename T, typename TI, typename T_ABLATION_SPEC>
         struct environment {
             using ABLATION_SPEC = T_ABLATION_SPEC;
-            static constexpr auto initial_reward_function = rl_tools::rl::environments::multirotor::parameters::reward_functions::reward_squared_position_only_torque<T>;
-            static constexpr auto target_reward_function = rl_tools::rl::environments::multirotor::parameters::reward_functions::reward_squared_position_only_torque_curriculum_target<T>;
-            static constexpr auto reward_function = ABLATION_SPEC::USE_INITIAL_REWARD_FUNCTION ? initial_reward_function : target_reward_function;
+            static constexpr auto get_reward_function() {
+                auto rf = ABLATION_SPEC::USE_INITIAL_REWARD_FUNCTION ?
+                          rl_tools::rl::environments::multirotor::parameters::reward_functions::reward_squared_position_only_torque<T> :
+                          rl_tools::rl::environments::multirotor::parameters::reward_functions::reward_squared_position_only_torque_curriculum_target<T>;
+                rf.reward_type = ABLATION_SPEC::REWARD_TYPE;
+                return rf;
+            }
+            static constexpr auto reward_function = get_reward_function();
 
 
             using REWARD_FUNCTION_CONST = typename rl_tools::utils::typing::remove_cv_t<decltype(reward_function)>;

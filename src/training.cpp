@@ -54,95 +54,55 @@ void run(typename learning_to_fly::config::Config<T_ABLATION_SPEC>::TI seed_offs
 
 using TI = typename learning_to_fly::config::Config<learning_to_fly::config::DEFAULT_ABLATION_SPEC>::TI;
 
-void dispatch_run(int num_points, int interval_ms, TI seed, TI max_steps){
+template<int N, int INTERVAL>
+void dispatch_reward(int rew, TI seed, TI max_steps) {
+    switch(rew) {
+        case 0: run<TrajectoryAblationSpec<N, INTERVAL, 0>>(seed, max_steps); break;
+        case 1: run<TrajectoryAblationSpec<N, INTERVAL, 1>>(seed, max_steps); break;
+        case 2: run<TrajectoryAblationSpec<N, INTERVAL, 2>>(seed, max_steps); break;
+        default: run<TrajectoryAblationSpec<N, INTERVAL, 2>>(seed, max_steps); break;
+    }
+}
+
+template<int N>
+void dispatch_interval(int interval, int rew, TI seed, TI max_steps) {
+    switch(interval) {
+        case 50: dispatch_reward<N, 50>(rew, seed, max_steps); break;
+        case 100: dispatch_reward<N, 100>(rew, seed, max_steps); break;
+        case 200: dispatch_reward<N, 200>(rew, seed, max_steps); break;
+        case 500: dispatch_reward<N, 500>(rew, seed, max_steps); break;
+        default: dispatch_reward<N, 100>(rew, seed, max_steps); break;
+    }
+}
+
+void dispatch_run(int num_points, int interval_ms, int reward_type, TI seed, TI max_steps){
     if (num_points == 0) {
-        run<TrajectoryAblationSpec<0>>(seed, max_steps);
+        dispatch_reward<0, 0>(reward_type, seed, max_steps);
         return;
     }
-    auto run_interval = [&](auto spec_tag){
-        using SPEC = decltype(spec_tag);
-        run<SPEC>(seed, max_steps);
-    };
-    if (num_points == 3) {
-        switch(interval_ms){
-            case 100: run_interval(TrajectoryAblationSpec<3, 100>{}); return;
-            case 500: run_interval(TrajectoryAblationSpec<3, 500>{}); return;
-            case 1000: run_interval(TrajectoryAblationSpec<3, 1000>{}); return;
-            case 1500: run_interval(TrajectoryAblationSpec<3, 1500>{}); return;
-            default:
-                std::cerr << "Unsupported interval: " << interval_ms << "ms (supported: 100, 500, 1000, 1500)" << std::endl;
-                return;
-        }
+    switch(num_points){
+        case 1: dispatch_interval<1>(interval_ms, reward_type, seed, max_steps); break;
+        case 2: dispatch_interval<2>(interval_ms, reward_type, seed, max_steps); break;
+        case 3: dispatch_interval<3>(interval_ms, reward_type, seed, max_steps); break;
+        default:
+            std::cerr << "Unsupported num_points: " << num_points << " (supported: 0, 1, 2, 3)" << std::endl;
+            break;
     }
-    if (num_points == 1) {
-        switch(interval_ms){
-            case 100: run_interval(TrajectoryAblationSpec<1, 100>{}); return;
-            case 500: run_interval(TrajectoryAblationSpec<1, 500>{}); return;
-            case 1000: run_interval(TrajectoryAblationSpec<1, 1000>{}); return;
-            case 1500: run_interval(TrajectoryAblationSpec<1, 1500>{}); return;
-            default: run_interval(TrajectoryAblationSpec<1, 100>{}); return;
-        }
-    }
-    if (num_points == 2) {
-        switch(interval_ms){
-            case 100: run_interval(TrajectoryAblationSpec<2, 100>{}); return;
-            case 500: run_interval(TrajectoryAblationSpec<2, 500>{}); return;
-            case 1000: run_interval(TrajectoryAblationSpec<2, 1000>{}); return;
-            case 1500: run_interval(TrajectoryAblationSpec<2, 1500>{}); return;
-            default: run_interval(TrajectoryAblationSpec<2, 100>{}); return;
-        }
-    }
-    if (num_points == 4) {
-        switch(interval_ms){
-            case 100: run_interval(TrajectoryAblationSpec<4, 100>{}); return;
-            case 500: run_interval(TrajectoryAblationSpec<4, 500>{}); return;
-            case 1000: run_interval(TrajectoryAblationSpec<4, 1000>{}); return;
-            case 1500: run_interval(TrajectoryAblationSpec<4, 1500>{}); return;
-            default: run_interval(TrajectoryAblationSpec<4, 100>{}); return;
-        }
-    }
-    std::cerr << "Unsupported num_points: " << num_points << " (supported: 0, 1, 2, 3, 4)" << std::endl;
 }
 
 int main(int argc, char** argv){
     TI seed = 0;
     TI max_steps = 0;
-    std::string arg1 = (argc >= 2) ? std::string(argv[1]) : "intervals";
-
-    if(arg1 == "intervals"){
-        if(argc >= 3) seed = std::stoi(argv[2]);
-        if(argc >= 4) max_steps = std::stoi(argv[3]);
-        dispatch_run(3, 100, seed, max_steps);
-        dispatch_run(3, 500, seed, max_steps);
-        dispatch_run(3, 1000, seed, max_steps);
-        dispatch_run(3, 1500, seed, max_steps);
-        return 0;
-    }
-    if(arg1 == "all"){
-        if(argc >= 3) seed = std::stoi(argv[2]);
-        if(argc >= 4) max_steps = std::stoi(argv[3]);
-        dispatch_run(0, 0, seed, max_steps);
-        dispatch_run(3, 100, seed, max_steps);
-        dispatch_run(3, 500, seed, max_steps);
-        dispatch_run(3, 1000, seed, max_steps);
-        dispatch_run(3, 1500, seed, max_steps);
-        return 0;
-    }
-
-    int num_points = std::stoi(arg1);
+    int num_points = 0;
     int interval_ms = 100;
-    int arg_idx = 2;
-    if(argc >= 3 && num_points > 0){
-        // check if argv[2] is interval
-        int val = std::stoi(argv[2]);
-        if(val == 100 || val == 500 || val == 1000 || val == 1500){
-            interval_ms = val;
-            arg_idx = 3;
-        }
-    }
-    if(argc > arg_idx) seed = std::stoi(argv[arg_idx++]);
-    if(argc > arg_idx) max_steps = std::stoi(argv[arg_idx++]);
+    int reward_type = 2;
 
-    dispatch_run(num_points, interval_ms, seed, max_steps);
+    if(argc >= 2) num_points = std::stoi(argv[1]);
+    if(argc >= 3) interval_ms = std::stoi(argv[2]);
+    if(argc >= 4) reward_type = std::stoi(argv[3]);
+    if(argc >= 5) seed = std::stoi(argv[4]);
+    if(argc >= 6) max_steps = std::stoi(argv[5]);
+
+    dispatch_run(num_points, interval_ms, reward_type, seed, max_steps);
     return 0;
 }

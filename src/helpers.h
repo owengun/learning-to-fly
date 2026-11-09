@@ -17,6 +17,7 @@ namespace learning_to_fly{
                 if constexpr (ABLATION_SPEC::NUM_TRAJECTORY_POINTS > 0) {
                     n += std::string("_i") + std::to_string(ABLATION_SPEC::TRAJECTORY_INTERVAL_MS);
                 }
+                n += std::string("_rew") + std::to_string(ABLATION_SPEC::REWARD_TYPE);
             }
             return n;
         }

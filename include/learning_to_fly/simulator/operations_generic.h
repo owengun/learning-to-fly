@@ -273,10 +273,23 @@ namespace rl_tools{
     static void initial_state(DEVICE& device, rl::environments::Multirotor<SPEC>& env, typename rl::environments::multirotor::StateTrajectory<T, TI, NEXT_COMPONENT>& state){
         initial_state(device, env, static_cast<NEXT_COMPONENT&>(state));
         state.trajectory_time = 0;
-        state.trajectory_scale = 0.5;
-        state.trajectory_interval = 5.5;
+        state.trajectory_scale = 0.4;
+        state.trajectory_interval = 5.0;
         state.trajectory_direction = 1.0;
         state.trajectory_z_scale = 0.0;
+        T target_pos[3], target_vel[3];
+        target_trajectory(device, state, (T)0, target_pos, target_vel);
+        for(typename DEVICE::index_t i = 0; i < 3; i++){
+            state.position[i] = target_pos[i];
+            state.linear_velocity[i] = target_vel[i];
+        }
+        state.orientation[0] = 1;
+        state.orientation[1] = 0;
+        state.orientation[2] = 0;
+        state.orientation[3] = 0;
+        for(typename DEVICE::index_t i = 0; i < 3; i++){
+            state.angular_velocity[i] = 0;
+        }
     }
     template<typename DEVICE, typename T, typename TI, typename SPEC, typename NEXT_COMPONENT>
     static void initial_state(DEVICE& device, rl::environments::Multirotor<SPEC>& env, typename rl::environments::multirotor::StateRandomForce<T, TI, NEXT_COMPONENT>& state){
@@ -354,6 +367,7 @@ namespace rl_tools{
     RL_TOOLS_FUNCTION_PLACEMENT static void sample_initial_state(DEVICE& device, rl::environments::Multirotor<SPEC>& env, typename rl::environments::multirotor::StateTrajectory<T_S, TI_S, NEXT_COMPONENT>& state, RNG& rng){
         typename DEVICE::SPEC::RANDOM random_dev;
         using T = typename SPEC::T;
+        using TI = typename DEVICE::index_t;
         sample_initial_state(device, env, static_cast<NEXT_COMPONENT&>(state), rng);
         state.trajectory_time = 0;
         bool hover = random::uniform_real_distribution(random_dev, (T)0, (T)1, rng) < env.parameters.mdp.init.guidance;
@@ -364,10 +378,25 @@ namespace rl_tools{
             state.trajectory_z_scale = 0;
         }
         else{
-            state.trajectory_scale = random::uniform_real_distribution(random_dev, (T)0.2, (T)0.6, rng);
-            state.trajectory_interval = random::uniform_real_distribution(random_dev, (T)4.5, (T)6.5, rng);
+            state.trajectory_scale = random::uniform_real_distribution(random_dev, (T)0.3, (T)0.5, rng);
+            state.trajectory_interval = random::uniform_real_distribution(random_dev, (T)4.5, (T)5.5, rng);
             state.trajectory_direction = random::uniform_real_distribution(random_dev, (T)0, (T)1, rng) < (T)0.5 ? (T)1.0 : (T)-1.0;
             state.trajectory_z_scale = random::uniform_real_distribution(random_dev, (T)-0.1, (T)0.1, rng);
+        }
+
+        // Spawn drone strictly on trajectory at t=0
+        T target_pos[3], target_vel[3];
+        target_trajectory(device, state, (T)0, target_pos, target_vel);
+        for(TI i = 0; i < 3; i++){
+            state.position[i] = target_pos[i];
+            state.linear_velocity[i] = target_vel[i];
+        }
+        state.orientation[0] = 1;
+        state.orientation[1] = 0;
+        state.orientation[2] = 0;
+        state.orientation[3] = 0;
+        for(TI i = 0; i < 3; i++){
+            state.angular_velocity[i] = 0;
         }
     }
     template<typename DEVICE, typename T_S, typename TI_S, typename SPEC, typename NEXT_COMPONENT, typename RNG>

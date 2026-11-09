@@ -20,6 +20,9 @@ struct EvaluationSummary {
     double avg_max_pos_error_m = 0;
     double avg_mean_vel_error_mps = 0;
     double settled_within_10cm_fraction = 0;
+    double settled_within_5cm_fraction = 0;
+    double settled_within_2cm_fraction = 0;
+    double settled_within_1cm_fraction = 0;
     double settled_within_20cm_fraction = 0;
     double avg_episode_length = 0;
 };
@@ -42,15 +45,18 @@ EvaluationSummary evaluate_trajectory_model(const std::string& checkpoint_path, 
     auto data_file = HighFive::File(checkpoint_path, HighFive::File::ReadOnly);
     rlt::load(ts.device, ts.actor_critic.actor, data_file.getGroup("actor"));
 
-    // Reset task and evaluate
+    // Reset task and ensure strictly canonical trajectory parameters
     rlt::reset(ts.device, ts.task, ts.rng_eval);
+    constexpr TI N_EPISODES = decltype(ts.task)::SPEC::N_EPISODES;
+    constexpr TI MAX_EP_LEN = decltype(ts.task)::SPEC::MAX_EPISODE_LENGTH;
+    for(TI ep_i = 0; ep_i < N_EPISODES; ep_i++){
+        rlt::initial_state(ts.device, ts.validation_envs[ep_i], ts.task.state[ep_i]);
+    }
+
     bool completed = false;
     while(!completed){
         completed = rlt::step(ts.device, ts.task, ts.actor_critic.actor, ts.validation_actor_buffers, ts.rng_eval);
     }
-
-    constexpr TI N_EPISODES = decltype(ts.task)::SPEC::N_EPISODES;
-    constexpr TI MAX_EP_LEN = decltype(ts.task)::SPEC::MAX_EPISODE_LENGTH;
 
     EvaluationSummary summary;
     summary.num_points = N_POINTS;
@@ -65,6 +71,9 @@ EvaluationSummary evaluate_trajectory_model(const std::string& checkpoint_path, 
     double total_vel_err_sum = 0;
     double total_ep_len = 0;
     long long total_steps_count = 0;
+    long long within_1cm_steps_count = 0;
+    long long within_2cm_steps_count = 0;
+    long long within_5cm_steps_count = 0;
     long long within_10cm_steps_count = 0;
     long long within_20cm_steps_count = 0;
 
@@ -97,6 +106,9 @@ EvaluationSummary evaluate_trajectory_model(const std::string& checkpoint_path, 
             total_vel_err_sum += vel_err;
             total_steps_count++;
 
+            if(pos_err < 0.01) within_1cm_steps_count++;
+            if(pos_err < 0.02) within_2cm_steps_count++;
+            if(pos_err < 0.05) within_5cm_steps_count++;
             if(pos_err < 0.10) within_10cm_steps_count++;
             if(pos_err < 0.20) within_20cm_steps_count++;
             if(pos_err > ep_max_err) ep_max_err = pos_err;
@@ -117,20 +129,33 @@ EvaluationSummary evaluate_trajectory_model(const std::string& checkpoint_path, 
         summary.avg_mean_pos_error_m = total_pos_err_sum / total_steps_count;
         summary.avg_rmse_pos_error_m = std::sqrt(total_pos_sq_err_sum / total_steps_count);
         summary.avg_mean_vel_error_mps = total_vel_err_sum / total_steps_count;
+        summary.settled_within_1cm_fraction = (double)within_1cm_steps_count / total_steps_count;
+        summary.settled_within_2cm_fraction = (double)within_2cm_steps_count / total_steps_count;
+        summary.settled_within_5cm_fraction = (double)within_5cm_steps_count / total_steps_count;
         summary.settled_within_10cm_fraction = (double)within_10cm_steps_count / total_steps_count;
         summary.settled_within_20cm_fraction = (double)within_20cm_steps_count / total_steps_count;
     }
     summary.avg_max_pos_error_m = total_max_pos_err_sum / N_EPISODES;
 
     std::cout << "Mean Episode Length: " << summary.avg_episode_length << " / " << MAX_EP_LEN << "\n";
-    std::cout << "Completed Episodes (No Crash): " << summary.completed_episodes << " / " << N_EPISODES
+    std::cout << "Completed Episodes (No Crash <5cm): " << summary.completed_episodes << " / " << N_EPISODES
               << " (" << (100.0 * summary.completed_episodes / N_EPISODES) << "%)\n";
     std::cout << "Average Position Error: " << std::fixed << std::setprecision(2) << (summary.avg_mean_pos_error_m * 100.0) << " cm\n";
     std::cout << "RMS Position Error: " << std::fixed << std::setprecision(2) << (summary.avg_rmse_pos_error_m * 100.0) << " cm\n";
     std::cout << "Average Max Position Error: " << std::fixed << std::setprecision(2) << (summary.avg_max_pos_error_m * 100.0) << " cm\n";
-    std::cout << "Steps within 20cm: " << std::fixed << std::setprecision(1) << (summary.settled_within_20cm_fraction * 100.0) << "%\n";
-    std::cout << "Steps within 10cm: " << std::fixed << std::setprecision(1) << (summary.settled_within_10cm_fraction * 100.0) << "%\n";
+    std::cout << "Steps within 5cm: " << std::fixed << std::setprecision(1) << (summary.settled_within_5cm_fraction * 100.0) << "%\n";
+    std::cout << "Steps within 2cm: " << std::fixed << std::setprecision(1) << (summary.settled_within_2cm_fraction * 100.0) << "%\n";
+    std::cout << "Steps within 1cm: " << std::fixed << std::setprecision(1) << (summary.settled_within_1cm_fraction * 100.0) << "%\n";
     std::cout << "Saved trajectory log to: " << csv_path << std::endl;
+    std::cout << std::defaultfloat << std::setprecision(6);
+    std::cout << "METRICS_JSON: {\"mean_err_m\": " << summary.avg_mean_pos_error_m
+              << ", \"rmse_err_m\": " << summary.avg_rmse_pos_error_m
+              << ", \"max_err_m\": " << summary.avg_max_pos_error_m
+              << ", \"dwell_5cm\": " << summary.settled_within_5cm_fraction
+              << ", \"dwell_2cm\": " << summary.settled_within_2cm_fraction
+              << ", \"dwell_1cm\": " << summary.settled_within_1cm_fraction
+              << ", \"survival\": " << ((double)summary.completed_episodes / summary.total_episodes)
+              << ", \"ep_length\": " << summary.avg_episode_length << "}\n";
 
     summary.num_points = N_POINTS;
     summary.interval_ms = INTERVAL_MS;
@@ -165,34 +190,62 @@ std::string find_latest_checkpoint(int n_points, int interval_ms = 0) {
     return checkpoints.back();
 }
 
-int main() {
+int main(int argc, char** argv) {
+    std::filesystem::create_directories("results/trajectories");
+    if(argc >= 2) {
+        std::string cp = argv[1];
+        int points = (argc >= 3) ? std::stoi(argv[2]) : 0;
+        int interval = (argc >= 4) ? std::stoi(argv[3]) : 100;
+        std::cout << "Evaluating custom checkpoint: " << cp << " (points=" << points << ", interval=" << interval << "ms)\n";
+        if(points == 0) evaluate_trajectory_model<0>(cp, "results/trajectories/trajectory_custom.csv");
+        else if(points == 1) {
+            if(interval == 50) evaluate_trajectory_model<1, 50>(cp, "results/trajectories/trajectory_custom.csv");
+            else if(interval == 200) evaluate_trajectory_model<1, 200>(cp, "results/trajectories/trajectory_custom.csv");
+            else if(interval == 500) evaluate_trajectory_model<1, 500>(cp, "results/trajectories/trajectory_custom.csv");
+            else evaluate_trajectory_model<1, 100>(cp, "results/trajectories/trajectory_custom.csv");
+        }
+        else if(points == 2) {
+            if(interval == 50) evaluate_trajectory_model<2, 50>(cp, "results/trajectories/trajectory_custom.csv");
+            else if(interval == 200) evaluate_trajectory_model<2, 200>(cp, "results/trajectories/trajectory_custom.csv");
+            else if(interval == 500) evaluate_trajectory_model<2, 500>(cp, "results/trajectories/trajectory_custom.csv");
+            else evaluate_trajectory_model<2, 100>(cp, "results/trajectories/trajectory_custom.csv");
+        }
+        else if(points == 3) {
+            if(interval == 50) evaluate_trajectory_model<3, 50>(cp, "results/trajectories/trajectory_custom.csv");
+            else if(interval == 200) evaluate_trajectory_model<3, 200>(cp, "results/trajectories/trajectory_custom.csv");
+            else if(interval == 500) evaluate_trajectory_model<3, 500>(cp, "results/trajectories/trajectory_custom.csv");
+            else evaluate_trajectory_model<3, 100>(cp, "results/trajectories/trajectory_custom.csv");
+        }
+        return 0;
+    }
+
     std::vector<EvaluationSummary> summaries;
     std::string cp0 = find_latest_checkpoint(0);
-    std::string cp_i100 = find_latest_checkpoint(3, 100);
+    std::string cp1 = find_latest_checkpoint(1, 100);
+    std::string cp2 = find_latest_checkpoint(2, 100);
+    std::string cp3 = find_latest_checkpoint(3, 100);
     std::string cp_i500 = find_latest_checkpoint(3, 500);
     std::string cp_i1000 = find_latest_checkpoint(3, 1000);
     std::string cp_i1500 = find_latest_checkpoint(3, 1500);
 
-    if(!cp0.empty()) summaries.push_back(evaluate_trajectory_model<0>(cp0, "trajectory_baseline_t0.csv"));
-    if(!cp_i100.empty()) summaries.push_back(evaluate_trajectory_model<3, 100>(cp_i100, "trajectory_interval_0.1s.csv"));
-    if(!cp_i500.empty()) summaries.push_back(evaluate_trajectory_model<3, 500>(cp_i500, "trajectory_interval_0.5s.csv"));
-    if(!cp_i1000.empty()) summaries.push_back(evaluate_trajectory_model<3, 1000>(cp_i1000, "trajectory_interval_1.0s.csv"));
-    if(!cp_i1500.empty()) summaries.push_back(evaluate_trajectory_model<3, 1500>(cp_i1500, "trajectory_interval_1.5s.csv"));
+    if(!cp0.empty()) summaries.push_back(evaluate_trajectory_model<0>(cp0, "results/trajectories/trajectory_baseline_t0.csv"));
+    if(!cp1.empty()) summaries.push_back(evaluate_trajectory_model<1, 100>(cp1, "results/trajectories/trajectory_points_n1.csv"));
+    if(!cp2.empty()) summaries.push_back(evaluate_trajectory_model<2, 100>(cp2, "results/trajectories/trajectory_points_n2.csv"));
+    if(!cp3.empty()) summaries.push_back(evaluate_trajectory_model<3, 100>(cp3, "results/trajectories/trajectory_interval_0.1s.csv"));
 
-    std::cout << "\n========================================================================================================\n";
-    std::cout << "                                     STATIC INTERVAL COMPARISON (N=3)                                  \n";
-    std::cout << "========================================================================================================\n";
-    std::cout << "Interval        | Lookahead Offsets       | Ep Length | Survival Rate | Mean Pos Error | RMSE Error | Within 20cm\n";
-    std::cout << "----------------+-------------------------+-----------+---------------+----------------+------------+------------\n";
+    std::cout << "\n===================================================================================================================================\n";
+    std::cout << "                                            LOOKAHEAD HORIZON COMPARISON (N = 0, 1, 2, 3)                                          \n";
+    std::cout << "===================================================================================================================================\n";
+    std::cout << "Model (Points N) | Lookahead Offsets       | Ep Length | Survival (<5cm) | Mean Pos Error | RMSE Error | <5cm   | <2cm   | <1cm   \n";
+    std::cout << "-----------------+-------------------------+-----------+-----------------+----------------+------------+--------+--------+--------\n";
     for(const auto& s : summaries) {
-        std::string interval_label = "None (Baseline)";
+        std::string model_label = "Baseline (N=0)";
         std::string lookahead_str = "None (0s)";
         if(s.num_points > 0){
             double dt = (double)s.interval_ms / 1000.0;
             std::stringstream ss_lbl, ss_off;
-            ss_lbl << std::fixed << std::setprecision(1) << dt << "s";
-            if (s.interval_ms == 100) ss_lbl << " (Original)";
-            interval_label = ss_lbl.str();
+            ss_lbl << "Lookahead (N=" << s.num_points << ")";
+            model_label = ss_lbl.str();
 
             ss_off << "[";
             for(int p = 0; p < s.num_points; p++){
@@ -202,14 +255,16 @@ int main() {
             lookahead_str = ss_off.str();
         }
 
-        std::cout << " " << std::setw(14) << std::left << interval_label << " | "
+        std::cout << " " << std::setw(15) << std::left << model_label << " | "
                   << std::setw(23) << std::left << lookahead_str << " | "
                   << std::setw(7) << std::right << std::fixed << std::setprecision(1) << s.avg_episode_length << "   | "
-                  << std::setw(11) << std::fixed << std::setprecision(1) << (100.0 * s.completed_episodes / s.total_episodes) << "% | "
+                  << std::setw(13) << std::fixed << std::setprecision(1) << (100.0 * s.completed_episodes / s.total_episodes) << "%   | "
                   << std::setw(12) << std::fixed << std::setprecision(2) << (s.avg_mean_pos_error_m * 100.0) << "cm | "
                   << std::setw(8) << std::fixed << std::setprecision(2) << (s.avg_rmse_pos_error_m * 100.0) << "cm | "
-                  << std::setw(9) << std::fixed << std::setprecision(1) << (s.settled_within_20cm_fraction * 100.0) << "%\n";
+                  << std::setw(6) << std::fixed << std::setprecision(1) << (s.settled_within_5cm_fraction * 100.0) << "% | "
+                  << std::setw(6) << std::fixed << std::setprecision(1) << (s.settled_within_2cm_fraction * 100.0) << "% | "
+                  << std::setw(6) << std::fixed << std::setprecision(1) << (s.settled_within_1cm_fraction * 100.0) << "%\n";
     }
-    std::cout << "========================================================================================================\n";
+    std::cout << "===================================================================================================================================\n";
     return 0;
 }

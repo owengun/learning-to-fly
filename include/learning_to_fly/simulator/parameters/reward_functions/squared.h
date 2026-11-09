@@ -20,6 +20,7 @@ namespace rl_tools::rl::environments::multirotor::parameters::reward_functions{
         T angular_acceleration;
         T action_baseline;
         T action;
+        int reward_type = 2; // 0: Quadratic (L2 squared), 1: Absolute (L1/norm), 2: Exponential Gaussian
         struct Components{
             T orientation_cost;
             T position_cost;
@@ -67,11 +68,34 @@ namespace rl_tools::rl::environments::multirotor::parameters::reward_functions{
         components.scaled_weighted_cost = params.scale * components.weighted_cost;
 
         if(terminated_flag){
-            components.reward = params.termination_penalty;
+            components.reward = (params.termination_penalty != (T)0) ? params.termination_penalty : (T)-5.0;
         }
         else{
-            components.reward = -components.scaled_weighted_cost + params.constant;
-            components.reward = (components.reward > 0 || !params.non_negative) ? components.reward : 0;
+            T orientation_penalty = params.orientation * components.orientation_cost;
+            T vel_penalty = params.linear_velocity * components.linear_vel_cost;
+            T action_penalty = params.action * components.action_cost;
+
+            if(params.reward_type == 0){
+                // 1. 일반 이차식 보상 (Quadratic Reward: L2 squared cost)
+                // - params.position * ||p - p*||^2
+                components.reward = params.constant - params.position * components.position_cost - orientation_penalty - vel_penalty - action_penalty;
+            }
+            else if(params.reward_type == 1){
+                // 2. 절대값 보상 (Absolute Reward: L1 / norm cost)
+                // - params.position * 5.0 * ||p - p*||
+                T pos_norm = math::sqrt(device.math, components.position_cost);
+                components.reward = params.constant - params.position * (T)5.0 * pos_norm - orientation_penalty - vel_penalty - action_penalty;
+            }
+            else{
+                // 3. 지수형 가우시안 보상 (Exponential Gaussian Reward)
+                // Error = 0cm -> exp(0) = 1.0 (Reward = +2.0)
+                // Error = 1cm -> exp(-800 * 0.0001) = 0.923 (Reward = +1.85)
+                // Error = 2cm -> exp(-800 * 0.0004) = 0.726 (Reward = +1.45)
+                // Error = 5cm -> exp(-800 * 0.0025) = 0.135 (Reward = +0.27)
+                // Error > 5cm -> Terminated (-5.0 penalty)
+                T pos_exp = math::exp(device.math, -(T)800.0 * components.position_cost);
+                components.reward = params.constant * pos_exp - orientation_penalty - vel_penalty - action_penalty;
+            }
         }
 
         return components;
