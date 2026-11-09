@@ -15,7 +15,8 @@ bool gather_history_critic(TS& ts) {
     constexpr std::size_t batch_size = CONFIG::TD3_PARAMETERS::CRITIC_BATCH_SIZE;
     const auto& rb = ts.off_policy_runner.replay_buffers[0];
     const auto& actor = ts.rnn_actor_target;
-    HistoryWindow window;
+    using Actor = std::remove_cv_t<std::remove_reference_t<decltype(actor)>>;
+    HistoryWindowFor<typename Actor::Input> window;
     for (std::size_t row = 0; row < batch_size;) {
         if (!sample_history_window(ts.device, rb, std::min(HISTORY_LEARN, batch_size - row),
                                    ts.rng, window)) return false;
@@ -47,7 +48,7 @@ bool train_history_actor(TS& ts, float learning_rate) {
     const auto& rb = ts.off_policy_runner.replay_buffers[0];
     auto& buffers = ts.actor_training_buffers;
     struct Sample {
-        HistoryWindow window;
+        HistoryWindowFor<typename Actor::Input> window;
         typename Actor::State initial;
     };
     std::vector<Sample> samples;

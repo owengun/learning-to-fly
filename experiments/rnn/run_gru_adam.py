@@ -14,7 +14,6 @@ from replay_evaluation import sha256, write_csv
 from run_curriculum_pilot import collect
 
 
-ACTOR = "gru-history"
 SEED = 0
 EPISODES = 10
 SCREEN = 100000
@@ -41,16 +40,21 @@ def wait_until_ready(process, gate):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exe", type=Path, required=True)
-    parser.add_argument("--reference", type=Path, required=True, help="SGD run's attempt directory")
+    parser.add_argument("--reference", type=Path, required=True, help="Reference run's attempt directory")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--full-observation", action="store_true")
     args = parser.parse_args()
+    actor = "gru-full" if args.full_observation else "gru-history"
+    inputs, hidden = (146, 26) if args.full_observation else (22, 32)
     reference = args.reference.resolve()
     reference_manifest = json.loads((reference / "run.json").read_text(encoding="utf-8"))
+    assert reference_manifest["seed"] == SEED and reference_manifest["episodes"] == EPISODES
+    assert reference_manifest["actor"] == ("mlp-original" if args.full_observation else "gru-history")
     with (reference / "flight_by_checkpoint.csv").open(newline="", encoding="utf-8") as stream:
-        sgd = next(row for row in csv.DictReader(stream) if int(row["checkpoint_step"]) == SCREEN)
+        baseline = next(row for row in csv.DictReader(stream) if int(row["checkpoint_step"]) == SCREEN)
     directory = args.output.resolve()
     directory.mkdir(parents=True)
-    binary = directory / "training_gru_adam.exe"
+    binary = directory / ("training_gru_full.exe" if args.full_observation else "training_gru_adam.exe")
     shutil.copy2(args.exe, binary)
     gate = directory / "screen_gate"
     gate.mkdir()
@@ -58,14 +62,14 @@ def main():
                "--screen-gate", str(gate)]
     path = directory / "run.json"
     manifest = {
-        "actor": ACTOR, "optimizer": "adam", "seed": SEED, "episodes": EPISODES,
+        "actor": actor, "optimizer": "adam", "seed": SEED, "episodes": EPISODES,
         "steps": FINISH + 1, "planned_steps": FINISH + 1, "command": command,
-        "executable_sha256": sha256(binary), "sgd_reference": str(reference),
-        "config": {"input": 22, "hidden": 32, "burn_in": 32, "learn": 8,
+        "executable_sha256": sha256(binary), "reference": str(reference),
+        "config": {"input": inputs, "hidden": hidden, "burn_in": 32, "learn": 8,
                    "alpha": 0.001, "beta1": 0.9, "beta2": 0.999, "epsilon": 1e-8,
                    "weight_decay": 0.0001, "bias_lr_factor": 1},
     }
-    comparison.PARAMETERS[ACTOR] = 5412
+    comparison.PARAMETERS[actor] = 3 * hidden * (inputs + hidden + 1) + 4 * (hidden + 1)
     comparison.write_json(path, manifest)
     started = time.monotonic()
     paused_seconds = 0
@@ -78,18 +82,20 @@ def main():
             wait_until_ready(process, gate)
             paused = time.monotonic()
             manifest["training"] = {"command": command, "exit": None, "seconds": paused - started}
-            comparison.evaluate(directory, manifest, binary, ACTOR, SEED, SCREEN + 1, EPISODES)
-            assert manifest["evaluations"]["0"]["returns"] == reference_manifest["evaluations"]["0"]["returns"]
+            comparison.evaluate(directory, manifest, binary, actor, SEED, SCREEN + 1, EPISODES)
+            if not args.full_observation:
+                assert manifest["evaluations"]["0"]["returns"] == reference_manifest["evaluations"]["0"]["returns"]
             screen = collect(directory, binary)[-1]
             assert screen["checkpoint_step"] == SCREEN
-            advance = (screen["mean_time_limit"] >= 0.2 or
-                       (screen["mean_length"] >= max(65, float(sgd["mean_length"]) + 20) and
-                        screen["mean_lower_boundary_exit"] <= float(sgd["mean_lower_boundary_exit"]) - 0.2 + 1e-9))
-            decision = {
-                "advance_to_300k": advance,
-                "rule": "at least 2/10 completions, or >=65 steps, >=SGD+20 and >=2 fewer downward exits",
-                "sgd": sgd, "adam": screen,
-            }
+            if args.full_observation:
+                advance = screen["mean_time_limit"] >= 0.2 or screen["mean_length"] >= 75.2
+                rule = "at least 2/10 completions, or mean length at least 75.2 steps"
+            else:
+                advance = (screen["mean_time_limit"] >= 0.2 or
+                           (screen["mean_length"] >= max(65, float(baseline["mean_length"]) + 20) and
+                            screen["mean_lower_boundary_exit"] <= float(baseline["mean_lower_boundary_exit"]) - 0.2 + 1e-9))
+                rule = "at least 2/10 completions, or >=65 steps, >=SGD+20 and >=2 fewer downward exits"
+            decision = {"advance_to_300k": advance, "rule": rule, "reference": baseline, "adam": screen}
             comparison.write_json(directory / "screen.json", decision)
             send_decision(gate, "continue" if advance else "stop")
             paused_seconds = time.monotonic() - paused
@@ -121,7 +127,7 @@ def main():
     (directory / "actor_update_diagnostics.csv").write_text(
         DIAGNOSTIC_COLUMNS + "\n" + "\n".join(rows) + "\n", encoding="utf-8"
     )
-    comparison.evaluate(directory, manifest, binary, ACTOR, SEED, end + 1, EPISODES)
+    comparison.evaluate(directory, manifest, binary, actor, SEED, end + 1, EPISODES)
     points = collect(directory, binary)
     write_csv(directory / "final.csv", [points[-1]])
     comparison.write_json(directory / "status.json", {

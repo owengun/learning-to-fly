@@ -22,9 +22,8 @@ struct ActorAdam {
     using Gradients = typename Actor::Gradients;
     using Scalar = typename Parameters::T;
     static constexpr std::size_t H = std::tuple_size_v<typename Actor::Hidden>;
-    static constexpr std::size_t I = std::tuple_size_v<typename Actor::Input>;
     static constexpr std::size_t O = std::tuple_size_v<typename Actor::Output>;
-    static constexpr std::size_t size = Actor::gate_count * H * (I + H + 1) + O * (H + 1);
+    static constexpr std::size_t size = Actor::parameter_count;
     using Vector = std::array<Scalar, size>;
     Vector first{}, second{}, last_gradient{};
     std::size_t updates = 0;

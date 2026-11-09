@@ -90,3 +90,13 @@ target_compile_definitions(training_gru_adam PRIVATE LEARNING_TO_FLY_ACTOR_GRU_H
 add_executable(test_actor_adam ../experiments/rnn/test_actor_adam.cpp)
 target_link_libraries(test_actor_adam PRIVATE rl_tools learning_to_fly)
 target_compile_definitions(test_actor_adam PRIVATE LEARNING_TO_FLY_ACTOR_GRU_HISTORY LEARNING_TO_FLY_ACTOR_GRU_ADAM)
+
+add_executable(training_gru_full training.cpp)
+target_link_libraries(training_gru_full PRIVATE rl_tools learning_to_fly)
+target_compile_definitions(training_gru_full PRIVATE
+        LEARNING_TO_FLY_ACTOR_GRU_HISTORY LEARNING_TO_FLY_ACTOR_GRU_ADAM LEARNING_TO_FLY_ACTOR_GRU_FULL)
+
+add_executable(test_full_observation ../experiments/rnn/test_full_observation.cpp)
+target_link_libraries(test_full_observation PRIVATE rl_tools learning_to_fly)
+target_compile_definitions(test_full_observation PRIVATE
+        LEARNING_TO_FLY_ACTOR_GRU_HISTORY LEARNING_TO_FLY_ACTOR_GRU_ADAM LEARNING_TO_FLY_ACTOR_GRU_FULL)

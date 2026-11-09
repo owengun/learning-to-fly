@@ -9,6 +9,12 @@
 
 namespace learning_to_fly::rnn {
 
+template <typename DEVICE, typename ENV, typename STATE, typename RNG, typename Actor>
+void reset_evaluation_episode(DEVICE& device, ENV& env, STATE& state, RNG& rng, Actor& actor) {
+    actor.reset();
+    RL_TOOLS_NAMESPACE_WRAPPER::rl_tools::sample_initial_state(device, env, state, rng);
+}
+
 // Replace the MLP policy during environment interaction.
 // The Critic architecture is not changed.
 template <typename TS, typename RNN>
@@ -30,7 +36,9 @@ void rnn_environment_step(TS& ts, RNN& actor) {
     );
 
     // One environment, as in the current project configuration.
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#if defined(LEARNING_TO_FLY_ACTOR_GRU_FULL)
+    auto input = full_observation(runner.buffers.observations, 0);
+#elif defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
     // Epilogue left the previous action after exploration and clipping here.
     auto input = history_input(runner.buffers.observations, 0, runner.buffers.actions, 0,
                                episode_start);

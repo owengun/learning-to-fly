@@ -1,5 +1,9 @@
 # GRU action-history and burn-in ablation
 
+This is a history-removal recurrent ablation. The 22-input GRU removes the
+MLP's explicit 32-step command history and supplies one preceding action.
+The full 146-input architecture comparison is in GRU_FULL_OBSERVATION.md.
+
 Run this experiment locally on the experiment/gru-action-burn-in branch.
 training_gru is the 18-feature SGD reference. training_gru_history keeps
 32 hidden units and SGD 1e-4, adds the preceding applied motor command

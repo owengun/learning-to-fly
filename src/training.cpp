@@ -40,19 +40,25 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
     }
     double total = 0;
     for (unsigned episode = 0; episode < episodes; ++episode) {
-#ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
-        ts.rnn_actor.reset();
-#endif
         typename Environment::State state, next_state;
+#ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
+        learning_to_fly::rnn::reset_evaluation_episode(ts.device, env, state, rng, ts.rnn_actor);
+#else
         rlt::sample_initial_state(ts.device, env, state, rng);
+#endif
         double episode_return = 0;
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#if defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY) && !defined(LEARNING_TO_FLY_ACTOR_GRU_FULL)
         std::array<float, 4> previous_action{};
 #endif
         for (TI t = 0; t < CONFIG::ENVIRONMENT_STEP_LIMIT_EVALUATION; ++t) {
             rlt::observe(ts.device, env, state, observation, rng);
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#if defined(LEARNING_TO_FLY_ACTOR_GRU_FULL)
+            const auto input = learning_to_fly::rnn::full_observation(observation, 0);
+            const auto frame = ts.rnn_actor.advance(input, ts.rnn_actor.hidden);
+            ts.rnn_actor.hidden = frame.state;
+            const auto output = ts.rnn_actor.action(frame.state.h);
+#elif defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
             auto input = learning_to_fly::rnn::extract_rltools_observation(observation);
             learning_to_fly::rnn::HistoryInput augmented{};
             std::copy(input.begin(), input.end(), augmented.begin());
