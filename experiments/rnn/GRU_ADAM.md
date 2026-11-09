@@ -33,3 +33,39 @@ process to 300,001 transitions if at least two episodes reach 500 steps,
 or if mean length is at least 65 and at least 20 steps above SGD with at
 least two fewer lower exits. Otherwise it exits with the screen artifacts.
 The checkpoint numbered 100000 precedes its numbered interaction.
+
+## Seed 0 result
+
+The two Actor variants have identical step-zero checkpoint hashes and
+evaluation returns. The Adam run completed 100,001 interactions, with
+evaluation of 11 checkpoints and 110 episodes. The 100,000 checkpoint
+uses the same protocol as the existing SGD reference.
+
+| Actor optimizer | Mean episode length | Lower boundary exits | 500-step completions | Mean return |
+| --- | ---: | ---: | ---: | ---: |
+| SGD | 46.1 | 8/10 | 0/10 | -119.02 |
+| Adam | 60.2 | 6/10 | 0/10 | -160.19 |
+
+Adam passed neither continuation criterion. It reduced downward exits by
+two, but did not reach the length threshold of 66.1 steps for this reference
+or complete any episode. The longest final Adam episode lasted 99 steps.
+The comparison covers one training seed.
+
+On episodes that exited downward, Adam's first ten steps supplied an
+estimated 44% of vehicle weight in vertical motor thrust. The last five
+steps averaged 114% and -1.33 m/s vertical speed, compared with 33% and
+-2.73 m/s for SGD. Four of six Adam downward exits crossed the estimated
+weight threshold, with the first crossing between steps 26 and 55.
+The other two never crossed it. The higher late thrust did not cancel
+the downward velocity before the boundary.
+
+The last logged update had raw gradient L2 0.8764, applied parameter
+update L2 0.02681 and parameter L2 15.7989. Mean Q was 34.14 with
+maximum absolute Q 56.22. Update/reset gate means were 0.260 and 0.597.
+Mean proposed and applied batch actions were 0.324 and 0.032.
+Mean recorded replay thrust was 0.406 of vehicle weight. All logged
+numeric diagnostics were finite through 3,500 Actor updates.
+
+Run manifests, exact commands, optimizer diagnostics, checkpoint and
+trajectory hashes, and raw episode CSVs are saved under
+build2026/gru-adam-seed0/run. The run stopped at the screening gate.
