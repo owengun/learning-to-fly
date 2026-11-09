@@ -189,6 +189,7 @@ namespace learning_to_fly {
             ts.device.logger,
             ts.step
         );
+        steps::curriculum(ts);
 
         // ----------------------------------------
         // 1. Environment interaction using RNN

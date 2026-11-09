@@ -39,10 +39,18 @@ namespace learning_to_fly {
                         }
                     }
                     if constexpr(CONFIG::ABLATION_SPEC::RECALCULATE_REWARDS == true){
-                        auto start = std::chrono::high_resolution_clock::now();
-                        rlt::recalculate_rewards(ts.device, ts.off_policy_runner.replay_buffers[0], ts.off_policy_runner.envs[0], ts.rng_eval);
-                        auto end = std::chrono::high_resolution_clock::now();
-//                        std::cout << "recalculate_rewards: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms\n";
+                        auto& buffer = ts.off_policy_runner.replay_buffers[0];
+                        const auto& env = ts.off_policy_runner.envs[0];
+                        const TI count = buffer.full ? buffer.CAPACITY : buffer.position;
+                        for (TI index = 0; index < count; ++index) {
+                            const auto& state = rlt::get(buffer.states, index, 0);
+                            const auto& next_state = rlt::get(buffer.next_states, index, 0);
+                            const auto action = rlt::row(ts.device, buffer.actions, index);
+                            const auto reward = rlt::reward(ts.device, env, state, action, next_state, ts.rng_eval);
+                            rlt::set(buffer.rewards, index, 0, reward);
+                        }
+                        std::cout << "[Curriculum] step " << ts.step
+                                  << ", recalculated " << count << " replay rewards" << std::endl;
                     }
                 }
             }

@@ -2,11 +2,15 @@
 
 #include <charconv>
 #include <chrono>
+#include <fstream>
+#include <iomanip>
+#include <limits>
 #include <string_view>
 #include "original_mlp_checkpoint.h"
 
 template <typename CONFIG>
-void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes) {
+void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
+              std::ostream* trajectory) {
     using TI = typename CONFIG::TI;
     using T = typename CONFIG::T;
     using Environment = typename CONFIG::ENVIRONMENT;
@@ -21,6 +25,13 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes) {
 #endif
     auto& env = ts.env_eval;
     auto& rng = ts.rng_eval;
+    if (trajectory) {
+        *trajectory << "episode,step,dt_s,reward,terminated,time_limit,"
+                       "x_m,y_m,z_m,qw,qx,qy,qz,vx_m_s,vy_m_s,vz_m_s,"
+                       "wx_rad_s,wy_rad_s,wz_rad_s,rpm_0,rpm_1,rpm_2,rpm_3,"
+                       "action_0,action_1,action_2,action_3\n"
+                    << std::setprecision(std::numeric_limits<T>::max_digits10);
+    }
     double total = 0;
     for (unsigned episode = 0; episode < episodes; ++episode) {
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
@@ -40,9 +51,24 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes) {
 #else
             rlt::evaluate(ts.device, ts.actor_critic.actor, observation, action, actor_buffer);
 #endif
-            rlt::step(ts.device, env, state, action, next_state, rng);
-            episode_return += rlt::reward(ts.device, env, state, action, next_state, rng);
-            if (rlt::terminated(ts.device, env, next_state, rng)) break;
+            const T dt = rlt::step(ts.device, env, state, action, next_state, rng);
+            const T reward = rlt::reward(ts.device, env, state, action, next_state, rng);
+            episode_return += reward;
+            const bool terminated = rlt::terminated(ts.device, env, next_state, rng);
+            if (trajectory) {
+                *trajectory << episode + 1 << ',' << t + 1 << ',' << dt << ','
+                            << reward << ',' << terminated << ','
+                            << (!terminated && t + 1 == CONFIG::ENVIRONMENT_STEP_LIMIT_EVALUATION);
+                for (T value : next_state.position) *trajectory << ',' << value;
+                for (T value : next_state.orientation) *trajectory << ',' << value;
+                for (T value : next_state.linear_velocity) *trajectory << ',' << value;
+                for (T value : next_state.angular_velocity) *trajectory << ',' << value;
+                for (T value : next_state.rpm) *trajectory << ',' << value;
+                for (TI j = 0; j < Environment::ACTION_DIM; ++j)
+                    *trajectory << ',' << rlt::get(action, 0, j);
+                *trajectory << '\n';
+            }
+            if (terminated) break;
             state = next_state;
         }
         total += episode_return;
@@ -63,6 +89,7 @@ int main(int argc, char** argv) {
     unsigned seed = 0;
     unsigned episodes = 10;
     std::string checkpoint;
+    std::string trajectory_path;
     bool evaluation_only = false;
     auto parse = [](std::string_view value, auto& destination) {
         auto end = value.data() + value.size();
@@ -86,6 +113,10 @@ int main(int argc, char** argv) {
                 continue;
             }
             if (option == "--episodes" && parse(value, episodes) && episodes > 0) continue;
+            if (option == "--trajectory-csv" && trajectory_path.empty()) {
+                trajectory_path = value;
+                continue;
+            }
         }
         std::cerr << "Usage: " << argv[0] << " [--seed N] [--steps N]"
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
@@ -93,7 +124,11 @@ int main(int argc, char** argv) {
 #else
                   << " [--evaluate FILE] [--episodes N]"
 #endif
-                  << '\n';
+                  << " [--trajectory-csv FILE]\n";
+        return 2;
+    }
+    if (!trajectory_path.empty() && !evaluation_only) {
+        std::cerr << "--trajectory-csv requires --evaluate\n";
         return 2;
     }
 
@@ -118,9 +153,20 @@ int main(int argc, char** argv) {
             return 1;
         }
         if (evaluation_only) {
-            evaluate(ts, episodes);
+            std::ofstream trajectory;
+            if (!trajectory_path.empty()) {
+                trajectory.open(trajectory_path);
+                if (!trajectory) {
+                    std::cerr << "Cannot open trajectory CSV: " << trajectory_path << '\n';
+                    learning_to_fly::destroy(ts);
+                    return 1;
+                }
+            }
+            evaluate(ts, episodes, trajectory.is_open() ? &trajectory : nullptr);
+            if (trajectory.is_open()) trajectory.close();
             learning_to_fly::destroy(ts);
-            return 0;
+            if (!trajectory) std::cerr << "Trajectory CSV write failed\n";
+            return trajectory ? 0 : 1;
         }
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
         ts.rnn_actor_target = ts.rnn_actor;
