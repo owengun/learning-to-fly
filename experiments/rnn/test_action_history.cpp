@@ -60,6 +60,7 @@ int main() {
     std::copy_n(window.inputs[0].begin(), 18, state_only.begin());
     require(actor.forward(window.inputs[0]) == base.forward(state_only),
             "initialization must preserve old policy");
+    actor.gates[2].input[0][18] = 0.4f;
     actor.reset();
     const auto initial = rnn::burn_in(actor, window);
     for (std::size_t t = 0; t < window.burn; ++t) actor.forward(window.inputs[t]);
@@ -79,6 +80,9 @@ int main() {
     for (TI j = 0; j < 4; ++j) next[18 + j] = rlt::get(rb.actions, row, j);
     target.hidden = state;
     require(target_next == target.forward(next), "target must extend current history once");
+    next[18] = 0;
+    target.hidden = state;
+    require(target_next != target.forward(next), "target must use the applied endpoint action");
 
     std::array<Actor::Output, 8> upstream{};
     upstream[0][1] = -0.5f;

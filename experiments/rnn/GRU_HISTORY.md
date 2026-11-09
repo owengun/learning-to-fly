@@ -34,3 +34,41 @@ than the re-run GRU reference. The primary diagnostics are episode length,
 completion, lower-boundary exits, terminal vertical speed and tilt,
 motor outputs, recurrent hidden norms and gate saturation. Training logs
 include mean Q, maximum absolute Q and the actor gradient L2 norm.
+
+## Seed 0 screen result
+
+Both runs completed 100,001 environment interactions and produced aligned
+100,000-transition checkpoints. The step-zero policies reproduced exactly
+the same ten returns. The audit verified 22 checkpoints and 220 evaluation
+episodes, including actor, target and trajectory file hashes.
+
+| Method | Mean flight steps | 500-step completion | Lower exit | Mean return | 3D position RMSE |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Reference GRU | 42.4 | 0/10 | 9/10 | -171.25 | 0.425 m |
+| Applied-action GRU plus burn-in | 46.1 | 0/10 | 8/10 | -119.02 | 0.343 m |
+
+In the earlier 300,000-transition pilot, the eight downward-exiting GRU
+episodes averaged -2.33 m/s vertical speed, 27.3 degrees of tilt and
+11,151 RPM in the last five steps. The projected motor thrust was 51.6%
+of vehicle weight, excluding external disturbances. The nine completed
+MLP episodes were near zero vertical speed and 99.7% of vehicle weight.
+The old GRU motor commands and sigmoid gates were unsaturated in those
+failure windows. The checkpoint replay reproduced all ten original returns.
+
+At 100,000 transitions, the reference and modified GRU's downward exits
+averaged -2.63 and -2.73 m/s over the last five steps. Projected vertical
+motor thrust averaged 35.3% and 32.5% of vehicle weight respectively.
+The update and reset gates remained near 0.5 and unsaturated. The actor
+gradient L2 norm at the logged update was 1.35 and 3.22. Batch mean Q
+was 7.23 and 6.81, with maximum absolute Q of 49.64 and 47.44.
+The history run's sampled prefixes averaged 12.75 burn-in steps at
+that update because many windows began near the true episode start.
+
+The screen did not pass the rule for extending to 300,001 transitions.
+This joint ablation changed both input and replay training. One seed
+does not identify the independent effect of either change. Adam and
+hidden-width variants were not run in this screen.
+
+The local artifacts are under build2026/gru-history-seed0. The screen
+contains archived executables, exact commands, update diagnostics,
+training logs, checkpoints, trajectories and per-checkpoint evaluations.
