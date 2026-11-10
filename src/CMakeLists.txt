@@ -100,3 +100,13 @@ add_executable(test_full_observation ../experiments/rnn/test_full_observation.cp
 target_link_libraries(test_full_observation PRIVATE rl_tools learning_to_fly)
 target_compile_definitions(test_full_observation PRIVATE
         LEARNING_TO_FLY_ACTOR_GRU_HISTORY LEARNING_TO_FLY_ACTOR_GRU_ADAM LEARNING_TO_FLY_ACTOR_GRU_FULL)
+
+add_executable(training_gru_h26_decay training.cpp)
+target_link_libraries(training_gru_h26_decay PRIVATE rl_tools learning_to_fly)
+target_compile_definitions(training_gru_h26_decay PRIVATE LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+    LEARNING_TO_FLY_ACTOR_GRU_ADAM LEARNING_TO_FLY_ACTOR_GRU_FULL LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR)
+
+add_executable(test_gru_h26_decay ../experiments/rnn/test_gru_h26_decay.cpp)
+target_link_libraries(test_gru_h26_decay PRIVATE rl_tools learning_to_fly)
+target_compile_definitions(test_gru_h26_decay PRIVATE LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+    LEARNING_TO_FLY_ACTOR_GRU_ADAM LEARNING_TO_FLY_ACTOR_GRU_FULL LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR)

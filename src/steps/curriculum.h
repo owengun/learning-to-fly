@@ -1,9 +1,10 @@
 namespace learning_to_fly {
     namespace steps {
         template <typename CONFIG>
-        void curriculum(TrainingState<CONFIG>& ts){
+        bool curriculum(TrainingState<CONFIG>& ts){
             using T = typename CONFIG::T;
             using TI = typename CONFIG::TI;
+            bool updated = false;
             if constexpr(CONFIG::ABLATION_SPEC::ENABLE_CURRICULUM == true) {
                 if(ts.step != 0 && ts.step % 100000 == 0 && ts.step != (CONFIG::STEP_LIMIT - 1)){
                     rlt::add_scalar(ts.device, ts.device.logger, "td3/gamma", ts.actor_critic.gamma);
@@ -52,6 +53,7 @@ namespace learning_to_fly {
                         std::cout << "[Curriculum] step " << ts.step
                                   << ", recalculated " << count << " replay rewards" << std::endl;
                     }
+                    updated = true;
                 }
             }
             if(CONFIG::ABLATION_SPEC::EXPLORATION_NOISE_DECAY == true){
@@ -62,7 +64,20 @@ namespace learning_to_fly {
                     ts.actor_critic.target_next_action_noise_clip *= noise_decay_base;
                 }
             }
+            return updated;
         }
+
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR
+        template <typename CONFIG>
+        void curriculum_with_actor_decay(TrainingState<CONFIG>& ts) {
+            if (curriculum(ts) && ts.step == 200000) {
+                using Parameters = typename CONFIG::OPTIMIZER::PARAMETERS;
+                ts.history_adam.alpha = Parameters::ALPHA * static_cast<typename CONFIG::T>(0.1);
+                std::cout << "[Actor Adam LR] step " << ts.step << ", alpha "
+                          << ts.history_adam.alpha << std::endl;
+            }
+        }
+#endif
     }
 }
 

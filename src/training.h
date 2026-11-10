@@ -222,7 +222,11 @@ namespace learning_to_fly {
         }
 
 
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR
+        steps::curriculum_with_actor_decay(ts);
+#else
         steps::curriculum(ts);
+#endif
 
         // ----------------------------------------
         // 1. Environment interaction using RNN

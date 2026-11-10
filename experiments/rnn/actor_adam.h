@@ -27,6 +27,7 @@ struct ActorAdam {
     using Vector = std::array<Scalar, size>;
     Vector first{}, second{}, last_gradient{};
     std::size_t updates = 0;
+    Scalar alpha = Parameters::ALPHA;
 
     struct Step {
         double update_l2 = 0;
@@ -72,7 +73,7 @@ struct ActorAdam {
             auto& v = next_second[index++];
             m = Parameters::BETA_1 * m + (1 - Parameters::BETA_1) * raw;
             v = Parameters::BETA_2 * v + (1 - Parameters::BETA_2) * raw * raw;
-            Scalar change = Parameters::ALPHA * first_correction * m /
+            Scalar change = alpha * first_correction * m /
                             (std::sqrt(v * second_correction) + Parameters::EPSILON);
             if (bias_factor > 1) change *= bias_factor;
             // Match RLtools CPU Adam: weight decay is outside alpha and only on weights.

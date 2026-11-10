@@ -144,7 +144,11 @@ bool train_history_actor(TS& ts, float learning_rate) {
                   << ',' << update_gate_sum / gate_values << ',' << reset_gate_sum / gate_values
                   << ',' << action_sum / (batch_size * action_dim)
                   << ',' << applied_sum / (batch_size * action_dim) << ',' << thrust_sum / batch_size
-                  << ',' << static_cast<double>(burn_steps) / samples.size() << '\n';
+                  << ',' << static_cast<double>(burn_steps) / samples.size();
+#ifdef LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR
+        std::cout << ',' << ts.history_adam.alpha;
+#endif
+        std::cout << '\n';
     }
 #else
         std::cout << "[GRU Diagnostics] step,q_mean,q_abs_max,grad_l2,mean_burn "
