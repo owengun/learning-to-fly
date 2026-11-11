@@ -37,3 +37,30 @@ python -B experiments/rnn/run_gru_full_budget.py `
     --mlp build2026/curriculum-pilot-seed0/seed-0/mlp-original/attempt-0001 `
     --output build2026/gru-h26-decay-seed0/run
 ```
+
+## Completed restart on 2026-11-11
+
+The previous run was stopped at the user's request after its 150,000 checkpoint and is archived separately. The completed restart used the same verified executable from that archive, with SHA256 `b92f4a14a29875bbfb64f81f94a509f7ff1fa2132641a2242600d1cdc1d698b7`, from source commit `2f21aea95bc61b8f12155f2aae13d26317516de7`. No previous trainer was running when this restart began. The restart trained from seed 0 to 300,001 interactions and exited normally. The trainer reports 1,817.5 seconds. All 31 checkpoints were evaluated with ten no-exploration episodes. Both Actor and target hashes and all ten returns match the archived h26 at all 21 checkpoints through 200,000. The logged order is checkpoint, curriculum update, alpha reduction, then Actor update at step 200,000. All subsequent logged alpha values are 0.0001.
+
+| Step | Actor | Complete / 10 | Mean length | Mean return | All position cost | Completed position cost |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| 280000 | MLP | 10 | 500.0 | -144.72 | 1.8030 | 1.8030 |
+| 280000 | h26 without decay | 10 | 500.0 | -55.81 | 1.8792 | 1.8792 |
+| 280000 | h26 with Actor LR decay | 10 | 500.0 | +238.21 | 1.2400 | 1.2400 |
+| 300000 | MLP | 9 | 454.9 | +138.20 | 1.4319 | 1.1597 |
+| 300000 | h26 without decay | 9 | 456.4 | -400.69 | 2.7508 | 2.5775 |
+| 300000 | h26 with Actor LR decay | 10 | 500.0 | +291.50 | 1.1291 | 1.1291 |
+
+| Actor | Worst completion after 200k | Mean completion after 200k | Points below 90% | First drop | First recovery | Steps since 200k | Steps since first drop |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| MLP | 70% | 88% | 3 | 210000 | 220000 | 20000 | 10000 |
+| h26 without decay | 50% | 82% | 5 | 210000 | 230000 | 30000 | 20000 |
+| h26 with Actor LR decay | 80% | 98% | 1 | 270000 | 280000 | 80000 | 10000 |
+
+The smaller alpha improved the worst observed post-curriculum completion and the 280k/300k return and position costs in this seed. The decay run completes all ten episodes at every post-200k checkpoint except 270k, where it completes eight. At 270k the original h26 is better, with ten completions and return +501.80 versus +83.71 for decay. Recovery to at least nine completions takes one 10k evaluation interval after the decay run's first drop. The preregistered time from the curriculum boundary is 80k, because that first drop occurs much later, compared with 30k for the original h26. It would be misleading to describe the 80k and 30k values as outage durations.
+
+Across the ten post-200k checkpoints, mean return is +251.80 for decay, -295.75 for original h26 and -570.80 for MLP. Mean all-episode position cost is 1.3234, 2.5769 and 2.6473 respectively. These checkpoint averages describe this one seed and reuse the same ten evaluation episodes. Performance across training seeds remains untested. The independent weight-decay term remains fixed, so total update L2 need not be one tenth of the original run.
+
+Artifacts are in `build2026/gru-h26-decay-seed0-restart/run/`. `REPORT.md` contains the comparison, `comparison.png` and `comparison.pdf` show complete curves, `comparison_summary.json` and `post_curriculum_summary.csv` retain the derived metrics, `flight_by_checkpoint.csv` contains 93 comparison rows, and `all_episodes.csv` contains 930 episode rows across the three methods. Checkpoints, raw trajectories, individual evaluation logs, training logs and actual Adam update diagnostics are retained. The parent directory contains runner logs, the training source commit and `analyze_completed_run.py` for reproducing the audit and report.
+
+For a future fresh reproduction, use the launch command above with `--decay-exe build2026/gru-h26-decay-seed0/run/training_gru_h26_decay.exe` and a new output directory. The saved checkpoint pairs contain Actor and target weights only. They omit the optimizer, replay and RNG state and cannot resume an exact continuous run. The paused archive and this completed restart must remain separate. No further parameter setting or additional training seed was run.
