@@ -34,8 +34,8 @@ def thrust_ratio(row):
     return 3.16e-10 * rotor_sq * (1 - 2 * (qx * qx + qy * qy)) / (0.027 * 9.81)
 
 
-def summarize(trajectory, returns, actor, step):
-    key = {"actor": actor, "seed": SEED, "checkpoint_step": step}
+def summarize(trajectory, returns, actor, step, seed=SEED):
+    key = {"actor": actor, "seed": seed, "checkpoint_step": step}
     episodes = list(episode_metrics(trajectory, returns, key))
     with trajectory.open(newline="", encoding="utf-8") as stream:
         groups = itertools.groupby(csv.DictReader(stream), key=lambda row: int(row["episode"]))
