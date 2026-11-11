@@ -39,3 +39,47 @@ Artifacts are in `build2026/h26-blind-validation-20261111/results/`. `INTERRUPTE
 The seed-1 MLP wins under the frozen rule because final completion is tied and its position cost is lower. Its return and post-200k completion metrics also favor MLP. Therefore the observed seed-0 advantage has already failed the requirement of a nonlosing rank in every seed. Completing seed 2 is still required for the requested descriptive three-seed statistics.
 
 No retry was launched. A requested retry must train seed-2 GRU from step 0 in a new directory with the same executable and protocol, retaining this interrupted archive. The 110k weight pair lacks Adam state, replay and RNG state and cannot restore a continuous run. The three successfully completed new jobs can be reused unchanged. `summarize_h26_blind_validation.py` audits all six complete method/seed runs, computes raw seed metrics and sample SDs, applies the frozen ranking, and writes reports and figures. It requires complete status and deliberately refuses this interrupted experiment.
+
+## Completed seed-2 recovery
+
+After the interruption report, the user requested completion using only a fresh seed-2 GRU restart. The same executable and frozen protocol were used from step 0, in build2026/h26-blind-validation-seed2-retry-20261111/results/. Training completed 300,001 interactions with exit code 0 in 1668.10 seconds. All 24 Actor/target files through 110,000 match the interrupted attempt exactly. The original interrupted directory is retained. Its partial curve was not concatenated or used as the seed-2 result.
+
+| Seed | Method | Final completion | Mean return | All position cost | Completed position cost | First 10/10 step | Worst / mean completion after 200k |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | mlp-original | 90% | +138.20 | 1.4319 | 1.1597 | 240000 | 70% / 88% |
+| 0 | gru-full-decay | 100% | +291.50 | 1.1291 | 1.1291 | 180000 | 80% / 98% |
+| 1 | mlp-original | 100% | +9.40 | 1.1763 | 1.1763 | 240000 | 60% / 85% |
+| 1 | gru-full-decay | 100% | -685.23 | 3.1486 | 3.1486 | 300000 | 0% / 48% |
+| 2 | mlp-original | 90% | -76.38 | 1.9817 | 1.8543 | Not reached | 0% / 61% |
+| 2 | gru-full-decay | 60% | -588.06 | 4.1511 | 3.3656 | Not reached | 0% / 32% |
+
+| Method | Metric | Mean | Sample SD | Observed seeds |
+| --- | --- | ---: | ---: | ---: |
+| mlp-original | final_completion | 0.9333 | 0.0577 | 3 |
+| mlp-original | final_mean_length | 469.5333 | 26.3917 | 3 |
+| mlp-original | final_return | 23.7414 | 108.0036 | 3 |
+| mlp-original | final_all_position_cost | 1.5300 | 0.4116 | 3 |
+| mlp-original | final_completed_position_cost | 1.3968 | 0.3963 | 3 |
+| mlp-original | first_ten_of_ten_step | 240000.0000 | 0.0000 | 2 |
+| mlp-original | post200k_worst_completion | 0.4333 | 0.3786 | 3 |
+| mlp-original | post200k_mean_completion | 0.7800 | 0.1480 | 3 |
+| gru-full-decay | final_completion | 0.8667 | 0.2309 | 3 |
+| gru-full-decay | final_mean_length | 439.0000 | 105.6551 | 3 |
+| gru-full-decay | final_return | -327.2630 | 538.0655 | 3 |
+| gru-full-decay | final_all_position_cost | 2.8096 | 1.5393 | 3 |
+| gru-full-decay | final_completed_position_cost | 2.5477 | 1.2334 | 3 |
+| gru-full-decay | first_ten_of_ten_step | 240000.0000 | 84852.8137 | 2 |
+| gru-full-decay | post200k_worst_completion | 0.2667 | 0.4619 | 3 |
+| gru-full-decay | post200k_mean_completion | 0.5933 | 0.3443 | 3 |
+
+Sample SD uses n−1. Completion fractions are on a 0-to-1 scale. First-10/10 averages include only the two attaining seeds for each method. Seed 2 never reaches 10/10 for either method and remains missing, rather than being replaced by the budget. Seed 0 selected the schedule. Seeds 1 and 2 were blind validation.
+
+The frozen superiority criterion fails. GRU wins in seed 0 on completion. MLP wins in seed 1 on position cost after tied final completion, and also has higher return and better post-200k completion. MLP wins in seed 2 on final completion (90% versus 60%), and also has lower position cost and higher return. Thus the seed-0 advantage did not reproduce in either validation seed. The data do not isolate whether the fixed decay schedule, architecture or other configuration differences account for the poor validation performance.
+
+All six selected method/seed runs have 31 evaluated checkpoints, for 186 summary rows and 1,860 episode rows. The four selected new runs exited normally. The fixed alpha change and exact archived executable hashes were verified. Full curves and audit outputs are in build2026/h26-blind-validation-20261111/results/REPORT.md, comparison.png, returns.png, summary.json, per_seed_metrics.csv, across_seed_metrics.csv, all_checkpoints.csv, all_episodes.csv and trajectory_provenance.json. validation_status.json marks the recovered comparison complete and lists all selected directories. The original status.json and INTERRUPTED.md preserve the historical interruption.
+
+Reproduce the full audit with the following command after all selected runs are complete.
+
+```powershell
+python -B experiments/rnn/summarize_h26_blind_validation.py --results build2026/h26-blind-validation-20261111/results --seed2-gru-retry build2026/h26-blind-validation-seed2-retry-20261111/results/seed-2/gru-full-decay
+```

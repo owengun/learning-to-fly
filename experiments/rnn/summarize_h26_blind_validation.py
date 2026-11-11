@@ -53,25 +53,39 @@ def show(value, digits=3):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", type=Path, required=True)
+    parser.add_argument("--seed2-gru-retry", type=Path)
     args = parser.parse_args()
     root = args.results.resolve()
     status, protocol = load(root / "status.json"), load(root / "protocol.json")
-    assert status["status"] == "complete"
-    assert status["completed"] == [dict(seed=seed, actor=actor) for seed, actor in ORDER]
+    retry = args.seed2_gru_retry.resolve() if args.seed2_gru_retry else None
+    if retry:
+        assert status["status"] == "interrupted_by_system_shutdown"
+        assert status["completed"] == [dict(seed=seed, actor=actor) for seed, actor in ORDER[:-1]]
+        assert load(retry / "run.json")["status"] == "complete"
+        assert load(retry.parent.parent / "status.json")["status"] == "complete"
+        assert sha256(retry.parent.parent / "protocol.json") == sha256(root / "protocol.json")
+    else:
+        assert status["status"] == "complete"
+        assert status["completed"] == [dict(seed=seed, actor=actor) for seed, actor in ORDER]
     assert status["protocol_sha256"] == sha256(root / "protocol.json")
     for relative, digest in protocol["source_hashes"].items():
         assert sha256(root / "source_snapshot" / relative) == digest
     points, episodes, per_seed, provenance = [], [], [], []
+    selected_runs = []
     for seed in (0, 1, 2):
         for actor in ACTORS:
             if seed == 0:
                 directory = Path(protocol["seed0"]["mlp" if actor == ACTORS[0] else "gru"])
             else:
                 directory = root / f"seed-{seed}" / actor
+            if seed == 2 and actor == ACTORS[1] and retry:
+                directory = retry
             manifest = load(directory / "run.json")
             assert manifest["training"]["exit"] == 0
             assert (manifest["seed"], manifest["steps"], manifest["episodes"]) == (seed, STEPS, 10)
             assert manifest["executable_sha256"] == EXPECTED_HASHES[actor]
+            selected_runs.append(dict(seed=seed, actor=actor, directory=str(directory),
+                                      training_exit=manifest["training"]["exit"]))
             binary = root / "executables" / protocol["executables"][actor]["name"]
             assert sha256(binary) == EXPECTED_HASHES[actor]
             if seed:
@@ -133,7 +147,9 @@ def main():
                   comparisons=comparisons, exceeds_mlp_under_frozen_rule=exceeds,
                   blind_seeds_exceed_mlp_under_frozen_rule=blind_exceeds,
                   audit=dict(training_runs=6, new_training_runs=4, checkpoints=186, episode_rows=1860,
-                             new_training_exits=[load(root / f"seed-{seed}" / actor / "run.json")["training"]["exit"] for seed, actor in ORDER]))
+                             new_training_exits=[row["training_exit"] for row in selected_runs if row["seed"] != 0]),
+                  selected_runs=selected_runs,
+                  recovery=dict(seed2_gru_retry=str(retry), interrupted_attempt_retained=True) if retry else None)
     write_json(root / "summary.json", result)
     lines = ["# Frozen MLP versus h26 blind validation", "",
              "Seed 0 selected the learning-rate schedule. Seeds 1 and 2 were trained after the protocol and "
@@ -187,7 +203,17 @@ def main():
               "separate archive. Machine-readable data include per_seed_metrics.csv, across_seed_metrics.csv, "
               "all_checkpoints.csv, all_episodes.csv, summary.json and trajectory_provenance.json. "
               "The protocol and full curves are in protocol.json and comparison.png/comparison.pdf.", ""]
+    if retry:
+        lines += ["The original seed-2 GRU attempt was interrupted by system power-off after the "
+                  "112k log record. It remains archived with its 110k weight pair. Following the interruption "
+                  "report, only seed-2 GRU was restarted from step 0 in a separate directory with the exact "
+                  "same executable and frozen protocol. The selected full run is " + str(retry) + ". "
+                  "Its data form the seed-2 GRU result above. No partial curve was concatenated, and no "
+                  "other training run was repeated. The original status.json retains the interruption "
+                  "history. validation_status.json identifies the complete recovered comparison.", ""]
     (root / "REPORT.md").write_text("\n".join(lines), encoding="utf-8")
+    write_json(root / "validation_status.json", dict(status="complete", protocol_sha256=status["protocol_sha256"],
+                                                    selected_runs=selected_runs, recovered_system_interruption=bool(retry)))
     os.environ["MPLCONFIGDIR"] = str(root / "plot-config")
     import matplotlib
     matplotlib.use("Agg")
