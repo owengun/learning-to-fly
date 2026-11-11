@@ -19,3 +19,23 @@ For all six method/seed combinations, report final completion, mean return, all-
 Position cost retains the seed-0 definition. Average `20 * (x² + y² + z²)` from logged prior states per episode and then across the indicated group. Exclude the first transition, whose prior state is absent, and terminal transitions, whose ordinary reward is replaced. Full trajectory and other episode metrics remain available.
 
 The runner freezes this protocol, binary hashes and source snapshots before starting the first trainer. Run `run_h26_blind_validation.py` with `--output`, `--mlp-exe`, `--gru-exe`, `--seed0-mlp` and `--seed0-gru`. Output must be a fresh directory. Checkpoints contain weights and cannot restore full optimizer, replay and RNG state. Any later restart must remain a separate run.
+
+## Interrupted on 2026-11-11
+
+Protocol and runner were committed as `c20f4e5` before the first new job. Frozen protocol SHA256 is `bf05f55f3af9ee10783d652bd58e5c8620d2bcdb5a07c12d55974b067e973c38`. Seed-1 MLP, seed-1 GRU and seed-2 MLP completed in order with exit code 0. Their training times were 580.16, 1729.12 and 542.83 seconds. All three have 31 evaluated checkpoints with ten episodes each and retain raw trajectories and checkpoint hashes.
+
+| Seed | Method | Final completion | Mean return | All position cost | Completed position cost | First 10/10 step | Worst / mean completion after 200k |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | MLP | 90% | +138.20 | 1.4319 | 1.1597 | 240000 | 70% / 88% |
+| 0 | GRU decay | 100% | +291.50 | 1.1291 | 1.1291 | 180000 | 80% / 98% |
+| 1 | MLP | 100% | +9.40 | 1.1763 | 1.1763 | 240000 | 60% / 85% |
+| 1 | GRU decay | 100% | -685.23 | 3.1486 | 3.1486 | 300000 | 0% / 48% |
+| 2 | MLP | 90% | -76.38 | 1.9817 | 1.8543 | Not reached | 0% / 61% |
+
+The seed-2 GRU trainer and serial runner were interrupted by a Windows power-off. System event 1074 records a power-off request at 12:52:16 Asia/Seoul, event 6006 records the event-log service stopping at 12:52:42, and the next system boot was at 13:04:25. Both process IDs are absent. The last logged Actor update is at 112,000 and the latest saved Actor/target checkpoint pair is at 110,000. The exact stop step and process exit codes were not persisted and are unavailable. This is a system interruption, with no logged numerical exception. The stale `running` status was corrected after process and system-event verification.
+
+Artifacts are in `build2026/h26-blind-validation-20261111/results/`. `INTERRUPTED.md`, `interruption.json`, `partial_per_seed_metrics.csv` and `partial_all_checkpoints.csv` preserve the verified partial outcome. The parent directory contains `system-shutdown-evidence.json`, runner logs and the source commit. The protocol, program copies and hashes, source snapshots, configurations and all produced logs, trajectories and checkpoints remain retained. There is no completed seed-2 GRU result. Do not compute a complete three-seed GRU mean or standard deviation from the two available seeds.
+
+The seed-1 MLP wins under the frozen rule because final completion is tied and its position cost is lower. Its return and post-200k completion metrics also favor MLP. Therefore the observed seed-0 advantage has already failed the requirement of a nonlosing rank in every seed. Completing seed 2 is still required for the requested descriptive three-seed statistics.
+
+No retry was launched. A requested retry must train seed-2 GRU from step 0 in a new directory with the same executable and protocol, retaining this interrupted archive. The 110k weight pair lacks Adam state, replay and RNG state and cannot restore a continuous run. The three successfully completed new jobs can be reused unchanged. `summarize_h26_blind_validation.py` audits all six complete method/seed runs, computes raw seed metrics and sample SDs, applies the frozen ranking, and writes reports and figures. It requires complete status and deliberately refuses this interrupted experiment.
