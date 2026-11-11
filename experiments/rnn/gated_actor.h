@@ -4,16 +4,17 @@
 
 namespace learning_to_fly::rnn {
 
-template <bool LSTM, std::size_t I = 18, std::size_t H = 32, std::size_t O = 4>
+template <bool LSTM, std::size_t I = 18, std::size_t H = 32, std::size_t O = 4, bool VANILLA = false>
 struct GatedActor {
+    static_assert(!(LSTM && VANILLA));
     using Base = RNNActor<I, H, O>;
     using Input = typename Base::Input;
     using Hidden = typename Base::Hidden;
     using Output = typename Base::Output;
     static constexpr bool recurrent = true;
-    static constexpr const char* name = LSTM ? "lstm" :
-        (I == 146 ? "gru-full" : (I == 22 ? "gru-history" : "gru"));
-    static constexpr std::size_t gate_count = LSTM ? 4 : 3;
+    static constexpr const char* name = VANILLA ? "rnn-full" : (LSTM ? (I == 146 ? "lstm-full" : "lstm") :
+        (I == 146 ? "gru-full" : (I == 22 ? "gru-history" : "gru")));
+    static constexpr std::size_t gate_count = VANILLA ? 1 : (LSTM ? 4 : 3);
     static constexpr std::size_t parameter_count = gate_count * H * (I + H + 1) + O * (H + 1);
 
     struct Gate {
@@ -80,7 +81,18 @@ struct GatedActor {
     }
 
     void initialize(unsigned seed) {
-        if constexpr (!LSTM && I == 22) {
+        if constexpr (VANILLA) {
+            Base reference;
+            reference.initialize(seed);
+            gates[0].input = reference.W_x;
+            gates[0].recurrent = reference.W_h;
+            gates[0].bias = reference.b_h;
+            W_out = reference.W_out;
+            b_out = reference.b_out;
+            reset();
+            return;
+        }
+        if constexpr (!LSTM && !VANILLA && I == 22) {
             // Match the 18-feature reference at initialization.
             GatedActor<false, 18, H, O> reference;
             reference.initialize(seed);
@@ -110,24 +122,30 @@ struct GatedActor {
     Frame advance(const Input& input, const State& previous) const {
         Frame frame{};
         auto& g = frame.gate;
-        constexpr std::size_t sigmoid_gates = LSTM ? 3 : 2;
-        for (std::size_t k = 0; k < sigmoid_gates; ++k) {
-            g[k] = gates[k].affine(input, previous.h);
-            for (auto& value : g[k]) value = 1 / (1 + std::exp(-value));
-        }
-        if constexpr (!LSTM) {
+        if constexpr (VANILLA) {
+            g[0] = gates[0].affine(input, previous.h);
             for (std::size_t j = 0; j < H; ++j)
-                frame.reset_hidden[j] = g[1][j] * previous.h[j];
-        }
-        auto& candidate = g.back();
-        candidate = gates.back().affine(input, LSTM ? previous.h : frame.reset_hidden);
-        for (std::size_t j = 0; j < H; ++j) {
-            candidate[j] = std::tanh(candidate[j]);
-            if constexpr (LSTM) {
-                frame.state.cell[j] = g[1][j] * previous.cell[j] + g[0][j] * candidate[j];
-                frame.state.h[j] = g[2][j] * std::tanh(frame.state.cell[j]);
-            } else {
-                frame.state.h[j] = g[0][j] * previous.h[j] + (1 - g[0][j]) * candidate[j];
+                frame.state.h[j] = g[0][j] = std::tanh(g[0][j]);
+        } else {
+            constexpr std::size_t sigmoid_gates = LSTM ? 3 : 2;
+            for (std::size_t k = 0; k < sigmoid_gates; ++k) {
+                g[k] = gates[k].affine(input, previous.h);
+                for (auto& value : g[k]) value = 1 / (1 + std::exp(-value));
+            }
+            if constexpr (!LSTM && !VANILLA) {
+                for (std::size_t j = 0; j < H; ++j)
+                    frame.reset_hidden[j] = g[1][j] * previous.h[j];
+            }
+            auto& candidate = g.back();
+            candidate = gates.back().affine(input, LSTM ? previous.h : frame.reset_hidden);
+            for (std::size_t j = 0; j < H; ++j) {
+                candidate[j] = std::tanh(candidate[j]);
+                if constexpr (LSTM) {
+                    frame.state.cell[j] = g[1][j] * previous.cell[j] + g[0][j] * candidate[j];
+                    frame.state.h[j] = g[2][j] * std::tanh(frame.state.cell[j]);
+                } else {
+                    frame.state.h[j] = g[0][j] * previous.h[j] + (1 - g[0][j]) * candidate[j];
+                }
             }
         }
         return frame;
@@ -186,7 +204,9 @@ struct GatedActor {
             std::array<Hidden, gate_count> delta{};
             Hidden previous_dh{};
             for (std::size_t j = 0; j < H; ++j) {
-                if constexpr (LSTM) {
+                if constexpr (VANILLA) {
+                    delta.back()[j] = dh[j];
+                } else if constexpr (LSTM) {
                     const float cell = std::tanh(frame.state.cell[j]);
                     dc[j] += dh[j] * g[2][j] * (1 - cell * cell);
                     delta[0][j] = dc[j] * candidate[j];
@@ -201,7 +221,7 @@ struct GatedActor {
                 }
                 delta.back()[j] *= 1 - candidate[j] * candidate[j];
             }
-            if constexpr (LSTM) {
+            if constexpr (LSTM || VANILLA) {
                 gates.back().backward(inputs[t - 1], previous.h, delta.back(),
                                       gradients.gates.back(), previous_dh);
             } else {

@@ -67,7 +67,7 @@ namespace learning_to_fly {
             return updated;
         }
 
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR
+#ifdef LEARNING_TO_FLY_ACTOR_SECOND_CURRICULUM_LR
         template <typename CONFIG>
         void curriculum_with_actor_decay(TrainingState<CONFIG>& ts) {
             if (curriculum(ts) && ts.step == 200000) {

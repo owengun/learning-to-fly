@@ -67,7 +67,7 @@ void train_critic_with_rnn_targets(
         critic_buffers
     );
 
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     auto check_values = [](const auto& matrix, const char* message) {
         for (std::size_t row = 0; row < std::remove_reference_t<decltype(matrix)>::ROWS; ++row)
             if (!std::isfinite(rlt::get(matrix, row, 0))) throw std::runtime_error(message);
@@ -91,7 +91,7 @@ void train_critic_with_rnn_targets(
         batch.observations_and_actions
     );
 
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     check_values(training_buffers.target_action_value, "Non-finite TD3 target");
     check_values(rlt::output(critic), "Non-finite Critic output");
 #endif
@@ -102,7 +102,7 @@ void train_critic_with_rnn_targets(
         training_buffers.d_output
     );
 
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     check_values(training_buffers.d_output, "Non-finite Critic loss gradient");
 #endif
     rlt::backward(

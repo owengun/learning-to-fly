@@ -26,7 +26,7 @@ bool gather_history_critic(TS& ts) {
             copy_replay_transition(ts.device, rb, ts.critic_batch, physical, row);
             state = actor.advance(window.inputs[window.burn + t], state).state;
             const auto action = next_history_action(actor, rb, physical, state);
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
             require_finite(action, "Non-finite target GRU action");
 #endif
             for (std::size_t j = 0; j < action.size(); ++j)
@@ -54,10 +54,14 @@ bool train_history_actor(TS& ts, float learning_rate) {
     std::vector<Sample> samples;
     samples.reserve(batch_size / HISTORY_LEARN + 1);
     std::size_t burn_steps = 0;
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     const auto& dynamics = ts.off_policy_runner.envs[0].parameters.dynamics;
     double update_gate_sum = 0, reset_gate_sum = 0;
     double action_sum = 0, applied_sum = 0, thrust_sum = 0;
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+    std::array<double, 4> gate_sum{};
+    double hidden_squared = 0, cell_squared = 0, hidden_saturated = 0;
+#endif
 #endif
     for (std::size_t row = 0; row < batch_size;) {
         auto& sample = samples.emplace_back();
@@ -74,12 +78,23 @@ bool train_history_actor(TS& ts, float learning_rate) {
             const auto frame = actor.advance(window.inputs[window.burn + t], state);
             state = frame.state;
             const auto action = actor.action(state.h);
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
             require_finite(action, "Non-finite replay GRU action");
-            require_finite(frame.gate[0], "Non-finite GRU update gate");
-            require_finite(frame.gate[1], "Non-finite GRU reset gate");
+            for (const auto& gate : frame.gate) require_finite(gate, "Non-finite recurrent gate");
+            require_finite(state.h, "Non-finite replay hidden state");
+            require_finite(state.cell, "Non-finite replay cell state");
             for (double value : frame.gate[0]) update_gate_sum += value;
-            for (double value : frame.gate[1]) reset_gate_sum += value;
+            if constexpr (Actor::gate_count > 1)
+                for (double value : frame.gate[1]) reset_gate_sum += value;
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+            for (std::size_t k = 0; k < Actor::gate_count; ++k)
+                for (double value : frame.gate[k]) gate_sum[k] += value;
+            for (double value : state.h) {
+                hidden_squared += value * value;
+                hidden_saturated += std::abs(value) > 0.95;
+            }
+            for (double value : state.cell) cell_squared += value * value;
+#endif
             const auto& next = rlt::get(rb.next_states, physical, 0);
             double thrust = 0;
             for (std::size_t j = 0; j < action_dim; ++j) {
@@ -118,7 +133,7 @@ bool train_history_actor(TS& ts, float learning_rate) {
     const double grad_norm = actor.gradient_norm(gradients);
     const bool log_update = ts.step % 1000 == 0 || ts.step == CONFIG::N_WARMUP_STEPS_ACTOR +
                                                  CONFIG::TD3_PARAMETERS::ACTOR_TRAINING_INTERVAL;
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     require_finite(std::array{update_gate_sum, reset_gate_sum, action_sum, applied_sum, thrust_sum},
                    "Non-finite GRU replay diagnostics");
 #else
@@ -128,24 +143,33 @@ bool train_history_actor(TS& ts, float learning_rate) {
         double q_sum = 0, q_abs_max = 0;
         for (std::size_t i = 0; i < batch_size; ++i) {
             const double q = rlt::get(buffers.state_action_value, i, 0);
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
             if (!std::isfinite(q)) throw std::runtime_error("Non-finite GRU actor Q");
 #endif
             q_sum += q;
             q_abs_max = std::max(q_abs_max, std::abs(q));
         }
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     const auto update = ts.history_adam.apply(actor, gradients);
     if (log_update) {
         constexpr auto gate_values = batch_size * std::tuple_size_v<typename Actor::Hidden>;
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+        std::cout << "[Recurrent Adam Diagnostics] " << ts.step << ',' << ts.history_adam.updates
+                  << ',' << q_sum / batch_size << ',' << q_abs_max << ',' << grad_norm
+                  << ',' << update.update_l2 << ',' << update.parameter_l2;
+        for (double value : gate_sum) std::cout << ',' << value / gate_values;
+        std::cout << ',' << std::sqrt(hidden_squared / batch_size)
+                  << ',' << std::sqrt(cell_squared / batch_size) << ',' << hidden_saturated / gate_values;
+#else
         std::cout << "[GRU Adam Diagnostics] " << ts.step << ',' << ts.history_adam.updates
                   << ',' << q_sum / batch_size << ',' << q_abs_max << ',' << grad_norm
                   << ',' << update.update_l2 << ',' << update.parameter_l2
-                  << ',' << update_gate_sum / gate_values << ',' << reset_gate_sum / gate_values
-                  << ',' << action_sum / (batch_size * action_dim)
+                  << ',' << update_gate_sum / gate_values << ',' << reset_gate_sum / gate_values;
+#endif
+        std::cout << ',' << action_sum / (batch_size * action_dim)
                   << ',' << applied_sum / (batch_size * action_dim) << ',' << thrust_sum / batch_size
                   << ',' << static_cast<double>(burn_steps) / samples.size();
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR
+#ifdef LEARNING_TO_FLY_ACTOR_SECOND_CURRICULUM_LR
         std::cout << ',' << ts.history_adam.alpha;
 #endif
         std::cout << '\n';

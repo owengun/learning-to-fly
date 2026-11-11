@@ -11,7 +11,11 @@ using Target = decltype(State::rnn_actor_target);
 using Adam = decltype(State::history_adam);
 using Parameters = typename Config::OPTIMIZER::PARAMETERS;
 static_assert(std::is_same_v<Model, Target>);
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+static_assert(Adam::size == Model::parameter_count);
+#else
 static_assert(Adam::size == 5412);
+#endif
 static_assert(Parameters::ALPHA == 1e-3f && Parameters::BETA_1 == 0.9f &&
               Parameters::BETA_2 == 0.999f && Parameters::EPSILON == 1e-8f);
 static_assert(Parameters::WEIGHT_DECAY == 1e-4f && Parameters::WEIGHT_DECAY_INPUT == 1e-4f &&

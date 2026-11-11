@@ -1,3 +1,4 @@
+#include "../experiments/rnn/recurrent_mode.h"
 #ifndef LEARNING_TO_FLY_ACTOR_MLP
 #define LEARNING_TO_FLY_EXPERIMENTAL_RNN
 #endif
@@ -35,7 +36,7 @@ namespace rlt = RL_TOOLS_NAMESPACE_WRAPPER::rl_tools;
 #include "../experiments/rnn/rnn_td3_actor_update.h"
 #include "../experiments/rnn/rnn_td3_critic_update.h"
 #include "../experiments/rnn/rnn_environment_step.h"
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE
 #include "../experiments/rnn/action_history_update.h"
 #endif
 #include "../experiments/rnn/actor_checkpoint.h"
@@ -222,7 +223,7 @@ namespace learning_to_fly {
         }
 
 
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_SECOND_CURRICULUM_LR
+#ifdef LEARNING_TO_FLY_ACTOR_SECOND_CURRICULUM_LR
         steps::curriculum_with_actor_decay(ts);
 #else
         steps::curriculum(ts);
@@ -342,7 +343,7 @@ namespace learning_to_fly {
                     CRITIC_TRAINING_INTERVAL == 0
         ) {
 
-#ifndef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#ifndef LEARNING_TO_FLY_ACTOR_SEQUENCE
             constexpr std::size_t sequence_length = 8;
             constexpr auto capacity = CONFIG::OFF_POLICY_RUNNER_SPEC::REPLAY_BUFFER_CAPACITY;
             using RNN = decltype(ts.rnn_actor_target);
@@ -354,7 +355,7 @@ namespace learning_to_fly {
 #endif
             for (TI critic_i = 0; critic_i < 2; ++critic_i) {
                 auto& buffers = ts.critic_training_buffers;
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE
                 if (!rnn::gather_history_critic(ts)) continue;
 #else
                 if (!rnn::gather_aligned_sequence_batch<sequence_length, capacity>(
@@ -398,7 +399,7 @@ namespace learning_to_fly {
 
         
             // Actual RNN Actor gradient update.
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE
             const bool updated = rnn::train_history_actor(ts, 0.0001f);
 #else
             const bool updated =

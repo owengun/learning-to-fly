@@ -36,7 +36,7 @@ int main() {
             state.critic_optimizers[1].alpha == critic_alpha, "Critic alpha must stay fixed");
 
     Actor saved{};
-    require(rnn::load_actor(saved, "checkpoints/gru-full/actor_step_200000.txt"),
+    require(rnn::load_actor(saved, std::filesystem::path("checkpoints") / Actor::name / "actor_step_200000.txt"),
             "load the boundary checkpoint");
     require(saved.b_out == before, "step 200000 checkpoint must precede the update");
 

@@ -8,7 +8,13 @@ using Actor = decltype(Training::rnn_actor);
 using TI = Config::TI;
 static_assert(Config::ENVIRONMENT::OBSERVATION_DIM == 146);
 static_assert(Config::ENVIRONMENT::ACTION_HISTORY_LENGTH == 32);
+#ifdef LEARNING_TO_FLY_ACTOR_RNN_FULL
+static_assert(Actor::parameter_count == 13764);
+#elif defined(LEARNING_TO_FLY_ACTOR_LSTM_FULL)
+static_assert(Actor::parameter_count == 14200);
+#else
 static_assert(Actor::parameter_count == 13602);
+#endif
 using Mlp = Config::ACTOR_TYPE;
 static_assert(Mlp::INPUT_DIM * 64 + 64 + 64 * 64 + 64 + 64 * Mlp::OUTPUT_DIM + Mlp::OUTPUT_DIM == 13828);
 
@@ -22,7 +28,7 @@ int main() {
     auto& actor = ts.rnn_actor;
     std::size_t count = 0;
     Actor::visit_parameters(actor, [&](float) { ++count; });
-    require(count == Actor::parameter_count, "visitor must enumerate 13602 parameters");
+    require(count == Actor::parameter_count, "visitor must enumerate every parameter");
     auto& env = ts.env_eval;
     auto& rng = ts.rng_eval;
     Config::ENVIRONMENT::State state{}, next{};
@@ -36,7 +42,7 @@ int main() {
         Config::ENVIRONMENT::State expected{};
         rlt::sample_initial_state(ts.device, env, expected, expected_rng);
         rnn::reset_evaluation_episode(ts.device, env, state, rng, actor);
-        require(actor.hidden.h == Actor::Hidden{}, "evaluation resets hidden state");
+        require(actor.hidden.h == Actor::Hidden{} && actor.hidden.cell == Actor::Hidden{}, "evaluation resets hidden and cell state");
         for (TI t = 0; t < 32; ++t)
             for (TI i = 0; i < 4; ++i)
                 require(state.action_history[t][i] == expected.action_history[t][i],
@@ -74,7 +80,7 @@ int main() {
         require(actor.action(hidden.h) == online[t], "online and replay learn window agree");
     }
 
-    const std::filesystem::path checkpoint = "checkpoint-test/gru-full.txt";
+    const std::filesystem::path checkpoint = std::filesystem::path("checkpoint-test") / (std::string(Actor::name) + ".txt");
     require(rnn::save_actor(actor, checkpoint), "save full-input checkpoint");
     Actor loaded{};
     require(rnn::load_actor(loaded, checkpoint), "load full-input checkpoint");
@@ -85,6 +91,20 @@ int main() {
     loaded.reset();
     require(loaded.forward(input) == actor.forward(input),
             "new episode starts from reinitialized history and hidden state");
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+    for (int episode = 0; episode < 2; ++episode) {
+        actor.hidden.h.fill(0.7f);
+        actor.hidden.cell.fill(1.3f);
+        rlt::set(ts.off_policy_runner.truncated, 0, 0, true);
+        rnn::rnn_environment_step(ts, actor);
+        const auto& replay = ts.off_policy_runner.replay_buffers[0];
+        const auto row = (replay.position + replay.CAPACITY - 1) % replay.CAPACITY;
+        const auto observation_input = rnn::full_observation(replay.observations, row);
+        const auto expected = actor.advance(observation_input, Actor::State{}).state;
+        require(actor.hidden.h == expected.h && actor.hidden.cell == expected.cell,
+                "normal online episode entry resets hidden and cell before observing");
+    }
+#endif
     learning_to_fly::destroy(ts);
     std::cout << "146 input columns, episode resets, history order, replay and checkpoint passed\n";
 }

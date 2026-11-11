@@ -3,7 +3,7 @@
 
 #include "rnn_actor.h"
 #include "observation_adapter.h"
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_HISTORY
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE
 #include "action_history_sampler.h"
 #endif
 
@@ -36,9 +36,9 @@ void rnn_environment_step(TS& ts, RNN& actor) {
     );
 
     // One environment, as in the current project configuration.
-#if defined(LEARNING_TO_FLY_ACTOR_GRU_FULL)
+#if defined(LEARNING_TO_FLY_ACTOR_FULL_OBSERVATION)
     auto input = full_observation(runner.buffers.observations, 0);
-#elif defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
+#elif defined(LEARNING_TO_FLY_ACTOR_SEQUENCE)
     // Epilogue left the previous action after exploration and clipping here.
     auto input = history_input(runner.buffers.observations, 0, runner.buffers.actions, 0,
                                episode_start);
@@ -47,12 +47,13 @@ void rnn_environment_step(TS& ts, RNN& actor) {
 #endif
 
     // RNN generates four motor actions.
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     require_finite(input, "Non-finite online GRU observation");
 #endif
     auto action = actor.forward(input);
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     require_finite(actor.hidden.h, "Non-finite online GRU hidden state");
+    require_finite(actor.hidden.cell, "Non-finite online recurrent cell state");
     require_finite(action, "Non-finite online GRU action");
 #endif
 
@@ -70,7 +71,7 @@ void rnn_environment_step(TS& ts, RNN& actor) {
     rlt::rl::components::off_policy_runner::epilogue(
         ts.device, runner, ts.rng
     );
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     const auto& rb = runner.replay_buffers[0];
     const auto row = (rb.position + rb.CAPACITY - 1) % rb.CAPACITY;
     const auto& next = rlt::get(rb.next_states, row, 0);

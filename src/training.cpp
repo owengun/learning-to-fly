@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <limits>
 #include <string_view>
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
 #include <thread>
 #endif
 #include "original_mlp_checkpoint.h"
@@ -33,7 +33,9 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
                        "x_m,y_m,z_m,qw,qx,qy,qz,vx_m_s,vy_m_s,vz_m_s,"
                        "wx_rad_s,wy_rad_s,wz_rad_s,rpm_0,rpm_1,rpm_2,rpm_3,"
                        "action_0,action_1,action_2,action_3";
-#if defined(LEARNING_TO_FLY_ACTOR_GRU) || defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+        *trajectory << ",hidden_l2,cell_l2,gate0_mean,gate1_mean,gate2_mean,gate3_mean,hidden_saturated";
+#elif defined(LEARNING_TO_FLY_ACTOR_GRU) || defined(LEARNING_TO_FLY_ACTOR_SEQUENCE)
         *trajectory << ",hidden_l2,update_mean,reset_mean,update_saturated,reset_saturated,candidate_saturated";
 #endif
         *trajectory << '\n' << std::setprecision(std::numeric_limits<T>::max_digits10);
@@ -47,18 +49,18 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
         rlt::sample_initial_state(ts.device, env, state, rng);
 #endif
         double episode_return = 0;
-#if defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY) && !defined(LEARNING_TO_FLY_ACTOR_GRU_FULL)
+#if defined(LEARNING_TO_FLY_ACTOR_SEQUENCE) && !defined(LEARNING_TO_FLY_ACTOR_FULL_OBSERVATION)
         std::array<float, 4> previous_action{};
 #endif
         for (TI t = 0; t < CONFIG::ENVIRONMENT_STEP_LIMIT_EVALUATION; ++t) {
             rlt::observe(ts.device, env, state, observation, rng);
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
-#if defined(LEARNING_TO_FLY_ACTOR_GRU_FULL)
+#if defined(LEARNING_TO_FLY_ACTOR_FULL_OBSERVATION)
             const auto input = learning_to_fly::rnn::full_observation(observation, 0);
             const auto frame = ts.rnn_actor.advance(input, ts.rnn_actor.hidden);
             ts.rnn_actor.hidden = frame.state;
             const auto output = ts.rnn_actor.action(frame.state.h);
-#elif defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
+#elif defined(LEARNING_TO_FLY_ACTOR_SEQUENCE)
             auto input = learning_to_fly::rnn::extract_rltools_observation(observation);
             learning_to_fly::rnn::HistoryInput augmented{};
             std::copy(input.begin(), input.end(), augmented.begin());
@@ -96,7 +98,21 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
                 for (T value : next_state.rpm) *trajectory << ',' << value;
                 for (TI j = 0; j < Environment::ACTION_DIM; ++j)
                     *trajectory << ',' << rlt::get(action, 0, j);
-#if defined(LEARNING_TO_FLY_ACTOR_GRU) || defined(LEARNING_TO_FLY_ACTOR_GRU_HISTORY)
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+                double hidden_squared = 0, cell_squared = 0, saturated = 0;
+                std::array<double, 4> gates{};
+                const auto n = frame.state.h.size();
+                for (double value : frame.state.h) {
+                    hidden_squared += value * value;
+                    saturated += std::abs(value) > 0.95;
+                }
+                for (double value : frame.state.cell) cell_squared += value * value;
+                for (std::size_t k = 0; k < frame.gate.size(); ++k)
+                    for (double value : frame.gate[k]) gates[k] += value;
+                *trajectory << ',' << std::sqrt(hidden_squared) << ',' << std::sqrt(cell_squared);
+                for (double value : gates) *trajectory << ',' << value / n;
+                *trajectory << ',' << saturated / n;
+#elif defined(LEARNING_TO_FLY_ACTOR_GRU) || defined(LEARNING_TO_FLY_ACTOR_SEQUENCE)
                 double hidden_sq = 0, update = 0, reset = 0;
                 std::size_t update_sat = 0, reset_sat = 0, candidate_sat = 0;
                 const auto n = frame.state.h.size();
@@ -129,7 +145,7 @@ void evaluate(learning_to_fly::TrainingState<CONFIG>& ts, unsigned episodes,
 #endif
 }
 
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
 bool await_screen_decision(const std::filesystem::path& directory) {
     {
         std::ofstream ready(directory / "ready");
@@ -161,7 +177,7 @@ int main(int argc, char** argv) {
     std::string checkpoint;
     std::string trajectory_path;
     bool evaluation_only = false;
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     std::filesystem::path screen_gate;
 #endif
     auto parse = [](std::string_view value, auto& destination) {
@@ -185,7 +201,7 @@ int main(int argc, char** argv) {
                 evaluation_only = option == "--evaluate";
                 continue;
             }
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
             if (option == "--screen-gate" && screen_gate.empty()) {
                 screen_gate = value;
                 continue;
@@ -204,7 +220,7 @@ int main(int argc, char** argv) {
                   << " [--evaluate FILE] [--episodes N]"
 #endif
                   << " [--trajectory-csv FILE]"
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
                   << " [--screen-gate DIRECTORY]"
 #endif
                   << '\n';
@@ -215,7 +231,7 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     if (!screen_gate.empty() &&
         (steps <= 100001 || !checkpoint.empty() || !std::filesystem::is_directory(screen_gate) ||
          std::filesystem::exists(screen_gate / "ready") ||
@@ -233,8 +249,12 @@ int main(int argc, char** argv) {
 #endif
     std::cout << " seed " << CONFIG::BASE_SEED + seed << " steps " << steps << '\n';
     learning_to_fly::init(ts, static_cast<TI>(seed));
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_MATCHED_RECURRENT
+    std::cout << "Recurrent Actor optimizer Adam, original MLP parameter configuration\n";
+#else
     std::cout << "GRU Actor optimizer Adam, using the original MLP parameter configuration\n";
+#endif
 #endif
     if (!checkpoint.empty()) {
 #ifdef LEARNING_TO_FLY_EXPERIMENTAL_RNN
@@ -284,7 +304,7 @@ int main(int argc, char** argv) {
             }
         }
 #endif
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
         try {
             learning_to_fly::step(ts, i + 1 == steps);
             if (i == 100000 && !screen_gate.empty() && !await_screen_decision(screen_gate)) break;
@@ -311,7 +331,7 @@ int main(int argc, char** argv) {
         learning_to_fly::step(ts, i + 1 == steps);
 #endif
     }
-#ifdef LEARNING_TO_FLY_ACTOR_GRU_ADAM
+#ifdef LEARNING_TO_FLY_ACTOR_SEQUENCE_ADAM
     std::cout << "Training finished at step " << ts.step << '\n';
 #endif
     learning_to_fly::destroy(ts);
